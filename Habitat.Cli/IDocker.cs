@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 
-namespace DevEnv
+namespace Habitat.Cli
 {
     public interface IDocker
     {

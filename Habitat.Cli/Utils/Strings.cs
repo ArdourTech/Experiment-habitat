@@ -1,4 +1,4 @@
-namespace DevEnv.Utils
+namespace Habitat.Cli.Utils
 {
     public static class Strings
     {

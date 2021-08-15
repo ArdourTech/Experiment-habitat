@@ -1,9 +1,9 @@
 using CommandDotNet;
 using CommandDotNet.Rendering;
 using static System.String;
-using static DevEnv.Utils.Objects;
+using static Habitat.Cli.Utils.Objects;
 
-namespace DevEnv
+namespace Habitat.Cli
 {
     public static class Log
     {

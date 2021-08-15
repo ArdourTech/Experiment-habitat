@@ -5,7 +5,7 @@ using CommandDotNet.Execution;
 using CommandDotNet.FluentValidation;
 using CommandDotNet.NameCasing;
 
-namespace DevEnv
+namespace Habitat.Cli
 {
     public static class Program
     {

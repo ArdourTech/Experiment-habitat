@@ -1,6 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DevEnv", "DevEnv\DevEnv.csproj", "{D9893CFA-2A7B-489C-90E9-59E0F71F298F}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Habitat.Cli", "Habitat.Cli\Habitat.Cli.csproj", "{D9893CFA-2A7B-489C-90E9-59E0F71F298F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

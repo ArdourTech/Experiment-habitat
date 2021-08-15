@@ -1,6 +1,6 @@
 using CommandDotNet;
 
-namespace DevEnv
+namespace Habitat.Cli
 {
     public class VerbosityArgs : IArgumentModel
     {

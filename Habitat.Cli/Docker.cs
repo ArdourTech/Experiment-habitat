@@ -4,12 +4,12 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using DevEnv.Utils;
 using Docker.DotNet;
 using Docker.DotNet.Models;
+using Habitat.Cli.Utils;
 using Newtonsoft.Json.Linq;
 
-namespace DevEnv
+namespace Habitat.Cli
 {
     public class Docker : IDocker
     {

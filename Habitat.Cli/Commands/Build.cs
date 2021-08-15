@@ -9,25 +9,25 @@ using FluentValidation.Attributes;
 using static System.Char;
 using static System.Environment;
 using static CommandDotNet.BooleanMode;
-using static DevEnv.Utils.File;
+using static Habitat.Cli.Utils.File;
 
-namespace DevEnv.Commands
+namespace Habitat.Cli.Commands
 {
     [Validator(typeof(BuildArgsValidator))]
     public class BuildArgs : IArgumentModel
     {
-        [EnvVar("DEV_ENV_USER")]
+        [EnvVar("HABITAT_USER")]
         [Option(
             ShortName = "u",
             LongName = "user",
-            Description = "DevEnv User")]
+            Description = "Habitat User")]
         public string User { get; set; } = UserName.Replace(" ", "").ToLower();
 
-        [EnvVar("DEV_ENV_USER_PASSWORD")]
+        [EnvVar("HABITAT_USER_PASSWORD")]
         [Option(
             ShortName = "p",
             LongName = "password",
-            Description = "DevEnv User Password")]
+            Description = "Habitat User Password")]
         public Password Password { get; set; }
 
         [Option(
@@ -46,7 +46,7 @@ namespace DevEnv.Commands
             ShortName = "t",
             LongName = "tag",
             Description = "Image Tag")]
-        public string Tag { get; set; } = Constants.DEFAULT_TAG;
+        public string Tag { get; set; }
     }
 
     public class BuildArgsValidator : AbstractValidator<BuildArgs>
@@ -71,7 +71,7 @@ namespace DevEnv.Commands
         }
     }
 
-    [Command(Usage = "%AppName% build", Description = "Builds the Dev Env")]
+    [Command(Usage = "%AppName% build", Description = "Builds the Habitat Environment")]
     // ReSharper disable once ClassNeverInstantiated.Global
     public class Build
     {
@@ -83,8 +83,8 @@ namespace DevEnv.Commands
 
             var buildArgs = new Dictionary<string, string>
             {
-                { "DEV_ENV_USER", args.User },
-                { "DEV_ENV_USER_PASSWORD", args.Password.GetPassword() }
+                { "HABITAT_USER", args.User },
+                { "HABITAT_USER_PASSWORD", args.Password.GetPassword() }
             };
             try
             {

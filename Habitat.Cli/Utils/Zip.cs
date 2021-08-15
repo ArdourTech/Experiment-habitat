@@ -8,11 +8,11 @@ using static System.Convert;
 using static System.IO.Directory;
 using static System.IO.File;
 using static System.IO.SearchOption;
-using static DevEnv.Utils.Objects;
-using static DevEnv.Utils.File;
+using static Habitat.Cli.Utils.Objects;
+using static Habitat.Cli.Utils.File;
 using static ICSharpCode.SharpZipLib.Tar.TarEntry;
 
-namespace DevEnv.Utils
+namespace Habitat.Cli.Utils
 {
     public static class Zip
     {

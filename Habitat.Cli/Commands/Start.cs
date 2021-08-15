@@ -2,9 +2,9 @@ using System.Threading.Tasks;
 using CommandDotNet;
 using FluentValidation;
 using FluentValidation.Attributes;
-using static DevEnv.Utils.Strings;
+using static Habitat.Cli.Utils.Strings;
 
-namespace DevEnv.Commands
+namespace Habitat.Cli.Commands
 {
     [Validator(typeof(StartArgsValidator))]
     public class StartArgs : IArgumentModel
@@ -13,13 +13,13 @@ namespace DevEnv.Commands
             ShortName = "i",
             LongName = "image",
             Description = "Image to Run")]
-        public string Image { get; set; } = "dev-env:latest";
+        public string Image { get; set; }
 
         [Option(
             ShortName = "n",
             LongName = "name",
             Description = "Name for the Container")]
-        public string Name { get; set; } = "dev-env";
+        public string Name { get; set; } = "habitat";
     }
 
     public class StartArgsValidator : AbstractValidator<StartArgs>
@@ -37,7 +37,7 @@ namespace DevEnv.Commands
     }
 
     // ReSharper disable once ClassNeverInstantiated.Global
-    [Command(Usage = "%AppName% start", Description = "Starts a Dev Env")]
+    [Command(Usage = "%AppName% start", Description = "Starts a Habitat Environment")]
     public class Start
     {
         [DefaultMethod]

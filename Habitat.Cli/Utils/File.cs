@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using static System.Diagnostics.Debug;
 
-namespace DevEnv.Utils
+namespace Habitat.Cli.Utils
 {
     public static class File
     {

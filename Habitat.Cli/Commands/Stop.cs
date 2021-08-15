@@ -2,9 +2,9 @@ using System.Threading.Tasks;
 using CommandDotNet;
 using FluentValidation;
 using FluentValidation.Attributes;
-using static DevEnv.Utils.Strings;
+using static Habitat.Cli.Utils.Strings;
 
-namespace DevEnv.Commands
+namespace Habitat.Cli.Commands
 {
     [Validator(typeof(StopArgsValidator))]
     public class StopArgs : IArgumentModel
@@ -13,7 +13,7 @@ namespace DevEnv.Commands
             ShortName = "n",
             LongName = "name",
             Description = "Name of the Container to Stop")]
-        public string Name { get; set; } = "dev-env";
+        public string Name { get; set; } = "habitat";
     }
 
     public class StopArgsValidator : AbstractValidator<StopArgs>
@@ -27,7 +27,7 @@ namespace DevEnv.Commands
     }
 
     // ReSharper disable once ClassNeverInstantiated.Global
-    [Command(Usage = "%AppName% stop", Description = "Stops a named Dev Env")]
+    [Command(Usage = "%AppName% stop", Description = "Stops a named Habitat Environment")]
     public class Stop
     {
         [DefaultMethod]

@@ -3,7 +3,7 @@ using CommandDotNet;
 using FluentValidation;
 using FluentValidation.Attributes;
 
-namespace DevEnv.Commands
+namespace Habitat.Cli.Commands
 {
     [Validator(typeof(ConnectArgsValidator))]
     public class ConnectArgs : IArgumentModel
@@ -12,7 +12,7 @@ namespace DevEnv.Commands
             ShortName = "n",
             LongName = "name",
             Description = "Name for the Container")]
-        public string Name { get; set; } = "dev-env";
+        public string Name { get; set; } = "habitat";
 
         [Option(
             ShortName = "c",
@@ -36,7 +36,7 @@ namespace DevEnv.Commands
     }
 
     // ReSharper disable once ClassNeverInstantiated.Global
-    [Command(Usage = "%AppName% connect", Description = "Connects to a running Dev Env by name")]
+    [Command(Usage = "%AppName% connect", Description = "Connects to a running Habitat Environment by name")]
     public class Connect
     {
         [DefaultMethod]
@@ -49,7 +49,7 @@ namespace DevEnv.Commands
                 return 1;
             }
 
-            Log.Info("docker exec -it dev-env fish");
+            Log.Info($"docker exec -it ${args.Name} fish");
             return 0;
         }
     }

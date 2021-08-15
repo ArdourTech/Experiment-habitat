@@ -1,9 +1,9 @@
 using System.Threading.Tasks;
 using CommandDotNet;
 using CommandDotNet.Rendering;
-using DevEnv.Commands;
+using Habitat.Cli.Commands;
 
-namespace DevEnv
+namespace Habitat.Cli
 {
     public class CommandLineInterface
     {
