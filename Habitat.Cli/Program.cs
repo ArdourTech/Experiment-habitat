@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Threading;
 using System.Threading.Tasks;
 using CommandDotNet;
 using CommandDotNet.Execution;
@@ -46,6 +45,7 @@ namespace Habitat.Cli
                 Log.Error($"Unexpected Exception occured: {exception.GetType()}");
                 Log.Error($"  {exception.Message}");
             }
+
             return ExitCodes.Error.Result;
         }
     }

@@ -72,7 +72,7 @@ namespace Habitat.Cli
                 Dockerfile = dockerfileName,
                 BuildArgs = buildArgs,
                 NoCache = noCache,
-                Tags = new List<string> { tag },
+                Tags = new List<string> { tag }
             };
             await using var tarball = Zip.TarballDirectory(workingDirectory.FullName, _cancellationToken);
             var outputStream =
