@@ -28,12 +28,25 @@ namespace Habitat.Cli
             var createParams = new CreateContainerParameters
             {
                 Name = name,
-                Env = new List<string> { "DISPLAY=docker.host.internal:0" },
+                Env = new List<string> { "DISPLAY=host.docker.internal:0" },
                 Image = image,
                 Tty = true,
                 AttachStderr = true,
                 AttachStdin = true,
-                AttachStdout = true
+                AttachStdout = true,
+                HostConfig = new HostConfig
+                {
+                    Mounts = new List<Mount>
+                    {
+                        new Mount
+                        {
+                            Source = "/var/run/docker.sock",
+                            Target = "/var/run/docker.sock",
+                            Type = "bind",
+                            ReadOnly = false,
+                        }
+                    },
+                }
             };
             var container = await _instance.Containers.CreateContainerAsync(createParams, _cancellationToken);
             return container?.ID;

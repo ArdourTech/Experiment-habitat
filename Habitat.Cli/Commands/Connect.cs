@@ -50,7 +50,7 @@ namespace Habitat.Cli.Commands
                 return Error.Result;
             }
 
-            Log.Info($"docker exec -it ${args.Name} fish");
+            Log.Info($"docker exec -it {args.Name} fish");
             return Success.Result;
         }
     }
