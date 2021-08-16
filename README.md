@@ -1,6 +1,6 @@
 # habitat-cli
 
-CLI tool for Dockerized Developer Environments
+CLI tool for Dockerized Developer Environments. Base docker image can be found at [habitat](https://github.com/ardourtech/habitat)
 
 ## Building for Release
 
