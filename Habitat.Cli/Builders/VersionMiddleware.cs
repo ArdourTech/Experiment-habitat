@@ -15,7 +15,7 @@ namespace Habitat.Cli.Builders
         internal static Action<AppConfigBuilder> UseVersionMiddleware(string version)
         {
             _appVersion = version;
-            return (AppConfigBuilder c) =>
+            return c =>
             {
                 c.UseMiddleware(DisplayVersionIfSpecified, MiddlewareSteps.Version);
                 c.BuildEvents.OnCommandCreated += AddVersionOption;

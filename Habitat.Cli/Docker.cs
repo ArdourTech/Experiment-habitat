@@ -58,20 +58,25 @@ namespace Habitat.Cli
         }
 
         public async Task BuildContainerAsync(
+            FileInfo dockerfile,
             DirectoryInfo workingDirectory,
             string tag,
             Dictionary<string, string> buildArgs,
             bool noCache = false)
         {
+            var dockerfileName = dockerfile.FullName
+                .Replace(workingDirectory.FullName, "")
+                .Replace('\\', '/').TrimStart('/');
             var dockerBuildArgs = new ImageBuildParameters
             {
+                Dockerfile = dockerfileName,
                 BuildArgs = buildArgs,
                 NoCache = noCache,
                 Tags = new List<string> { tag }
             };
             await using var tarball = Zip.TarballDirectory(workingDirectory.FullName, _cancellationToken);
-            var outputStream = await _instance.Images
-                .BuildImageFromDockerfileAsync(tarball, dockerBuildArgs, _cancellationToken);
+            var outputStream =
+                await _instance.Images.BuildImageFromDockerfileAsync(tarball, dockerBuildArgs, _cancellationToken);
             using var reader = new StreamReader(outputStream);
             string line;
             while (!reader.EndOfStream && Objects.NonNull(line = await reader.ReadLineAsync()))
