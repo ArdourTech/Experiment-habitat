@@ -18,6 +18,7 @@ namespace Habitat.Cli
         Task<bool> StopContainerAsync(string containerId);
 
         Task BuildContainerAsync(
+            FileInfo dockerfile,
             DirectoryInfo workingDirectory,
             string tag,
             Dictionary<string, string> buildArgs,

@@ -38,6 +38,12 @@ namespace Habitat.Cli.Commands
         public DirectoryInfo WorkingDirectory { get; set; } = new(CurrentDirectory);
 
         [Option(
+            ShortName = "f",
+            LongName = "file",
+            Description = "DockerFile")]
+        public FileInfo Dockerfile { get; set; } = new FileInfo(Path.Combine(CurrentDirectory, "Dockerfile"));
+
+        [Option(
             BooleanMode = Implicit,
             LongName = "no-cache",
             Description = "No Cache")]
@@ -64,11 +70,14 @@ namespace Habitat.Cli.Commands
             RuleFor(x => x.Tag)
                 .NotEmpty()
                 .WithMessage("The Tag must not be blank or empty");
+            RuleFor(x => x.Dockerfile)
+                .Must(Exists)
+                .WithMessage("The Working Directory must contain the Dockerfile, or Path to Dockerfile must exist.");
             RuleFor(x => x.WorkingDirectory)
                 .NotEmpty()
-                .Must(DirExists)
-                .Must(DirContainsFile("Dockerfile"))
-                .WithMessage("The Working Directory must contain a Dockerfile");
+                .Must(Exists)
+                .Must(((args, info) => IsDescendant(args.Dockerfile, info)))
+                .WithMessage("The Dockerfile must exist within the working directory");
         }
     }
 
@@ -89,8 +98,8 @@ namespace Habitat.Cli.Commands
             };
             try
             {
-                Log.Info($"Building Docker Image from {args.WorkingDirectory.FullName} for user {args.User}");
-                await docker.BuildContainerAsync(args.WorkingDirectory, args.Tag, buildArgs, args.NoCache);
+                Log.Info($"Building Docker Image from {args.Dockerfile.FullName} for user {args.User} with context {args.WorkingDirectory.FullName}");
+                await docker.BuildContainerAsync(args.Dockerfile, args.WorkingDirectory, args.Tag, buildArgs, args.NoCache);
                 return Success.Result;
             }
             catch (Exception ex)
