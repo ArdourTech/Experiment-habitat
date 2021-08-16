@@ -2,6 +2,7 @@ using System.Threading.Tasks;
 using CommandDotNet;
 using FluentValidation;
 using FluentValidation.Attributes;
+using static CommandDotNet.ExitCodes;
 using static Habitat.Cli.Utils.Strings;
 
 namespace Habitat.Cli.Commands
@@ -38,12 +39,12 @@ namespace Habitat.Cli.Commands
             if (IsBlank(runningContainerId))
             {
                 Log.Debug($"No running Docker Container name {args.Name}");
-                return 0;
+                return Success.Result;
             }
 
             Log.Debug($"Stopping Docker Container {runningContainerId}");
             await docker.StopContainerAsync(runningContainerId);
-            return 0;
+            return Success.Result;
         }
     }
 }

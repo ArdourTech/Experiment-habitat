@@ -2,6 +2,7 @@ using System.Threading.Tasks;
 using CommandDotNet;
 using FluentValidation;
 using FluentValidation.Attributes;
+using static CommandDotNet.ExitCodes;
 using static Habitat.Cli.Utils.Strings;
 
 namespace Habitat.Cli.Commands
@@ -47,20 +48,20 @@ namespace Habitat.Cli.Commands
             if (await docker.IsContainerRunningAsync(args.Name))
             {
                 Log.Info($"Docker Container named {args.Name} is already running.");
-                return 0;
+                return Success.Result;
             }
 
             if (!await docker.ImageExistsAsync(args.Image))
             {
                 Log.Error($"Docker Image {args.Image} was not found.");
-                return 1;
+                return Error.Result;
             }
 
             var containerId = await docker.FindContainerIdAsync(args.Name);
             if (IsBlank(containerId)) containerId = await docker.CreateContainerAsync(args.Image, args.Name);
 
             var runContainer = await docker.RunContainerAsync(containerId);
-            return runContainer ? 0 : 1;
+            return runContainer ? Success.Result : Error.Result;
         }
     }
 }

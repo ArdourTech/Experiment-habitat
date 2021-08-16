@@ -9,6 +9,7 @@ using FluentValidation.Attributes;
 using static System.Char;
 using static System.Environment;
 using static CommandDotNet.BooleanMode;
+using static CommandDotNet.ExitCodes;
 using static Habitat.Cli.Utils.File;
 
 namespace Habitat.Cli.Commands
@@ -90,12 +91,12 @@ namespace Habitat.Cli.Commands
             {
                 Log.Info($"Building Docker Image from {args.WorkingDirectory.FullName} for user {args.User}");
                 await docker.BuildContainerAsync(args.WorkingDirectory, args.Tag, buildArgs, args.NoCache);
-                return 0;
+                return Success.Result;
             }
             catch (Exception ex)
             {
                 Log.Error(ex.Message);
-                return 1;
+                return Error.Result;
             }
         }
     }

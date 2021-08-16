@@ -2,6 +2,7 @@ using System.Threading.Tasks;
 using CommandDotNet;
 using FluentValidation;
 using FluentValidation.Attributes;
+using static CommandDotNet.ExitCodes;
 
 namespace Habitat.Cli.Commands
 {
@@ -46,11 +47,11 @@ namespace Habitat.Cli.Commands
             if (!await docker.IsContainerRunningAsync(args.Name))
             {
                 Log.Error($"Docker Container named {args.Name} is not running.");
-                return 1;
+                return Error.Result;
             }
 
             Log.Info($"docker exec -it ${args.Name} fish");
-            return 0;
+            return Success.Result;
         }
     }
 }
