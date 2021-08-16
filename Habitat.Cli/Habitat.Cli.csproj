@@ -12,6 +12,11 @@
         <Authors>Alexander Scott</Authors>
         <Description>CLI tool for Dockerized Developer Environments</Description>
         <RepositoryUrl>https://github.com/ardourtech/habitat-cli</RepositoryUrl>
+        <PublishSingleFile>true</PublishSingleFile>
+        <PublishReadyToRun>true</PublishReadyToRun>
+        <SelfContained>true</SelfContained>
+        <PublishReadyToRunShowWarnings>true</PublishReadyToRunShowWarnings>
+        <IncludeAllContentForSelfExtract>true</IncludeAllContentForSelfExtract>
     </PropertyGroup>
 
     <ItemGroup>
