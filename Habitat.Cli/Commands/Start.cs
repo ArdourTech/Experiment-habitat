@@ -21,6 +21,11 @@ namespace Habitat.Cli.Commands
             LongName = "name",
             Description = "Name for the Container")]
         public string Name { get; set; } = "habitat";
+
+        [Option(
+            LongName = "with-x11-display",
+            Description = "Adds an Environment variable to bind the X11 Display to the host on container creation")]
+        public bool WithX11Display { get; set; } = false;
     }
 
     public class StartArgsValidator : AbstractValidator<StartArgs>
@@ -58,7 +63,8 @@ namespace Habitat.Cli.Commands
             }
 
             var containerId = await docker.FindContainerIdAsync(args.Name);
-            if (IsBlank(containerId)) containerId = await docker.CreateContainerAsync(args.Image, args.Name);
+            if (IsBlank(containerId))
+                containerId = await docker.CreateContainerAsync(args.Image, args.Name, args.WithX11Display);
 
             var runContainer = await docker.RunContainerAsync(containerId);
             return runContainer ? Success.Result : Error.Result;
