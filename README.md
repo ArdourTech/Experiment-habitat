@@ -74,11 +74,14 @@ Options:
   -n | --name         <TEXT>  [habitat]
   Name for the Container
 
+  --network           <TEXT>  []
+  Network to connect the Container to. This value is only used during Container creation
+
   --with-x11-display
-  Adds an Environment variable to bind the X11 Display to the host on container creation
+  Adds an Environment variable to bind the X11 Display to the host during Container creation
 
   --with-docker
-  Binds the Host Docker Socket to the running container; allowing access to the Host's Docker Engine
+  Binds the Host Docker Socket to the running Container; allowing access to the Host's Docker Engine
 ```
 
 ### Stop

@@ -22,17 +22,17 @@ namespace Habitat.Cli.Commands
         public string Name { get; set; } = "habitat";
 
         [Option(LongName = "network",
-                Description = "Network to connect the Container to")]
+                Description = "Network to connect the Container to. This value is only used during Container creation")]
         public string? Network { get; set; } = "";
 
         [Option(LongName = "with-x11-display",
                 Description =
-                    "Adds an Environment variable to bind the X11 Display to the host on container creation")]
+                    "Adds an Environment variable to bind the X11 Display to the host during Container creation")]
         public bool WithX11Display { get; set; } = false;
 
         [Option(LongName = "with-docker",
                 Description =
-                    "Binds the Host Docker Socket to the running container; allowing access to the Host's Docker Engine")]
+                    "Binds the Host Docker Socket to the running Container; allowing access to the Host's Docker Engine")]
         public bool WithDocker { get; set; } = false;
     }
 
