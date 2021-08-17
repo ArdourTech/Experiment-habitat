@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -18,48 +17,41 @@ namespace Habitat.Cli.Commands
     public class BuildArgs : IArgumentModel
     {
         [EnvVar("HABITAT_USER")]
-        [Option(
-            ShortName = "u",
-            LongName = "user",
-            Description = "Habitat User")]
+        [Option(ShortName = "u",
+                LongName = "user",
+                Description = "Habitat User")]
         public string User { get; set; } = UserName.Replace(" ", "").ToLower();
 
         [EnvVar("HABITAT_USER_PASSWORD")]
-        [Option(
-            ShortName = "p",
-            LongName = "password",
-            Description = "Habitat User Password")]
+        [Option(ShortName = "p",
+                LongName = "password",
+                Description = "Habitat User Password")]
         public Password Password { get; set; }
 
-        [Option(
-            ShortName = "d",
-            LongName = "directory",
-            Description = "Working Directory")]
+        [Option(ShortName = "d",
+                LongName = "directory",
+                Description = "Working Directory")]
         public DirectoryInfo WorkingDirectory { get; set; } = new(CurrentDirectory);
 
-        [Option(
-            ShortName = "f",
-            LongName = "file",
-            Description = "DockerFile")]
+        [Option(ShortName = "f",
+                LongName = "file",
+                Description = "DockerFile")]
         public FileInfo Dockerfile { get; set; } = new(Path.Combine(CurrentDirectory, "Dockerfile"));
 
-        [Option(
-            BooleanMode = Implicit,
-            LongName = "no-cache",
-            Description = "No Cache")]
+        [Option(BooleanMode = Implicit,
+                LongName = "no-cache",
+                Description = "No Cache")]
         public bool NoCache { get; set; } = false;
 
-        [Option(
-            ShortName = "t",
-            LongName = "tag",
-            Description = "Image Tag")]
+        [Option(ShortName = "t",
+                LongName = "tag",
+                Description = "Image Tag")]
         public string Tag { get; set; }
     }
 
     public class BuildArgsValidator : AbstractValidator<BuildArgs>
     {
-        public BuildArgsValidator()
-        {
+        public BuildArgsValidator() {
             RuleFor(x => x.User)
                 .NotEmpty()
                 .Must(user => !user.All(IsWhiteSpace))
@@ -87,28 +79,22 @@ namespace Habitat.Cli.Commands
     {
         // ReSharper disable once UnusedMember.Global
         [DefaultMethod]
-        public async Task<int> RunAsync(CommandContext context, BuildArgs args)
-        {
-            var docker = context.Services.GetOrThrow<IDocker>();
-
+        public async Task<int> RunAsync(IDocker docker, BuildArgs args) {
             var buildArgs = new Dictionary<string, string>
             {
                 { "HABITAT_USER", args.User },
                 { "HABITAT_USER_PASSWORD", args.Password.GetPassword() }
             };
-            try
-            {
-                Log.Info(
-                    $"Building Docker Image from {args.Dockerfile.FullName} for user {args.User} with context {args.WorkingDirectory.FullName}");
-                await docker.BuildContainerAsync(args.Dockerfile, args.WorkingDirectory, args.Tag, buildArgs,
-                    args.NoCache);
-                return Success.Result;
-            }
-            catch (Exception ex)
-            {
-                Log.Error(ex.Message);
-                return Error.Result;
-            }
+
+            Log.Info($"Building Docker Image from {args.Dockerfile.FullName} " +
+                     $"for user {args.User} " +
+                     $"with context {args.WorkingDirectory.FullName}");
+            await docker.BuildContainerAsync(args.Dockerfile,
+                                             args.WorkingDirectory,
+                                             args.Tag,
+                                             buildArgs,
+                                             args.NoCache);
+            return Success.Result;
         }
     }
 }

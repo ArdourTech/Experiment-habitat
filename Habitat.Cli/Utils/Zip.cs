@@ -16,8 +16,7 @@ namespace Habitat.Cli.Utils
 {
     public static class Zip
     {
-        private static Func<string, bool> CancellationIsNotRequested(CancellationToken token = default)
-        {
+        private static Func<string, bool> CancellationIsNotRequested(CancellationToken token = default) {
             return IsNull(token)
                 ? ignored => true
                 : ignored => !token.IsCancellationRequested;
@@ -25,15 +24,13 @@ namespace Habitat.Cli.Utils
 
         public static Stream TarballDirectory(
             string directory,
-            CancellationToken cancellationToken = default)
-        {
+            CancellationToken cancellationToken = default) {
             var stream = new MemoryStream();
             var files = GetFiles(directory, "*.*", AllDirectories)
                 .Where(IsNotGitDirectory);
             Log.Debug("Creating Tar Archive...");
             using var archive = new TarOutputStream(stream, Encoding.UTF8) { IsStreamOwner = false };
-            foreach (var file in files.TakeWhile(CancellationIsNotRequested(cancellationToken)))
-            {
+            foreach (var file in files.TakeWhile(CancellationIsNotRequested(cancellationToken))) {
                 var tarName = file[directory.Length..].Replace('\\', '/').TrimStart('/');
                 Log.Debug($"\tAdding {tarName}");
                 var entry = CreateTarEntry(tarName);
@@ -42,8 +39,7 @@ namespace Habitat.Cli.Utils
                 entry.TarHeader.Mode = ToInt32("100755", 8); //chmod 755
                 archive.PutNextEntry(entry);
                 var localBuffer = new byte[32 * 1024];
-                while (true)
-                {
+                while (true) {
                     var numRead = fileStream.Read(localBuffer, 0, localBuffer.Length);
                     if (numRead <= 0) break;
                     archive.Write(localBuffer, 0, numRead);

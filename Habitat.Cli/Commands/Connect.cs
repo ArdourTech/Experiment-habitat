@@ -9,23 +9,20 @@ namespace Habitat.Cli.Commands
     [Validator(typeof(ConnectArgsValidator))]
     public class ConnectArgs : IArgumentModel
     {
-        [Option(
-            ShortName = "n",
-            LongName = "name",
-            Description = "Name for the Container")]
+        [Option(ShortName = "n",
+                LongName = "name",
+                Description = "Name for the Container")]
         public string Name { get; set; } = "habitat";
 
-        [Option(
-            ShortName = "c",
-            LongName = "command",
-            Description = "Command to exec")]
+        [Option(ShortName = "c",
+                LongName = "command",
+                Description = "Command to exec")]
         public string Command { get; set; } = "fish";
     }
 
     public class ConnectArgsValidator : AbstractValidator<ConnectArgs>
     {
-        public ConnectArgsValidator()
-        {
+        public ConnectArgsValidator() {
             RuleFor(x => x.Name)
                 .NotEmpty()
                 .WithMessage("The Name must not be blank or empty");
@@ -41,11 +38,8 @@ namespace Habitat.Cli.Commands
     public class Connect
     {
         [DefaultMethod]
-        public async Task<int> RunAsync(CommandContext context, ConnectArgs args)
-        {
-            var docker = context.Services.GetOrThrow<IDocker>();
-            if (!await docker.IsContainerRunningAsync(args.Name))
-            {
+        public async Task<int> RunAsync(IDocker docker, ConnectArgs args) {
+            if (!await docker.IsContainerRunningAsync(args.Name)) {
                 Log.Error($"Docker Container named {args.Name} is not running.");
                 return Error.Result;
             }
