@@ -31,14 +31,15 @@ namespace Habitat.Cli.Commands
     {
         [DefaultMethod]
         public async Task<int> RunAsync(IDocker docker, StopArgs args) {
-            var runningContainerId = await docker.RunningContainerIdAsync(args.Name);
+            var containerName = args.Name;
+            var runningContainerId = await docker.RunningContainerIdAsync(containerName);
             if (IsBlank(runningContainerId)) {
-                Log.Debug($"No running Docker Container name {args.Name}");
+                Log.Debug($"No running Docker Container name {containerName}");
                 return Success.Result;
             }
 
             Log.Debug($"Stopping Docker Container {runningContainerId}");
-            await docker.StopContainerAsync(runningContainerId);
+            await docker.StopContainerAsync(runningContainerId!);
             return Success.Result;
         }
     }

@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 using CommandDotNet;
 using FluentValidation;
@@ -13,12 +14,16 @@ namespace Habitat.Cli.Commands
         [Option(ShortName = "i",
                 LongName = "image",
                 Description = "Image to Run")]
-        public string Image { get; set; }
+        public string Image { get; set; } = null!;
 
         [Option(ShortName = "n",
                 LongName = "name",
                 Description = "Name for the Container")]
         public string Name { get; set; } = "habitat";
+
+        [Option(LongName = "network",
+                Description = "Network to connect the Container to")]
+        public string? Network { get; set; }
 
         [Option(LongName = "with-x11-display",
                 Description =
@@ -50,24 +55,27 @@ namespace Habitat.Cli.Commands
     {
         [DefaultMethod]
         public async Task<int> RunAsync(IDocker docker, StartArgs args) {
-            if (await docker.IsContainerRunningAsync(args.Name)) {
-                Log.Info($"Docker Container named {args.Name} is already running.");
+            var containerName = args.Name;
+            if (await docker.IsContainerRunningAsync(containerName)) {
+                Log.Info($"Docker Container named {containerName} is already running.");
                 return Success.Result;
             }
 
-            if (!await docker.ImageExistsAsync(args.Image)) {
-                Log.Error($"Docker Image {args.Image} was not found.");
+            var containerImage = args.Image;
+            if (!await docker.ImageExistsAsync(containerImage)) {
+                Log.Error($"Docker Image {containerImage} was not found.");
                 return Error.Result;
             }
 
-            var containerId = await docker.FindContainerIdAsync(args.Name);
-            if (IsBlank(containerId))
-                containerId = await docker.CreateContainerAsync(args.Image,
-                                                                args.Name,
+            var containerId = await docker.FindContainerIdAsync(containerName);
+            if (IsBlank(containerId)) {
+                containerId = await docker.CreateContainerAsync(containerImage,
+                                                                containerName,
                                                                 args.WithX11Display,
                                                                 args.WithDocker);
+            }
 
-            var runContainer = await docker.RunContainerAsync(containerId);
+            var runContainer = await docker.RunContainerAsync(containerId!);
             return runContainer ? Success.Result : Error.Result;
         }
     }

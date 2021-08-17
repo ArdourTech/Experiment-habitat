@@ -17,7 +17,7 @@ namespace Habitat.Cli
                    .UseDefaultsFromEnvVar()
                    .UseNameCasing(Case.KebabCase)
                    .UseFluentValidation()
-                   .UseErrorHandler(ErrorHandler)
+                   .UseErrorHandler(ErrorHandler!)
                    .Configure(UseVersionMiddleware(Version))
                    .Configure(WithParameterResolvers)
                    .RunAsync(args);

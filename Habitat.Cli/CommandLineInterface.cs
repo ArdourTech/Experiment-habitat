@@ -7,10 +7,10 @@ namespace Habitat.Cli
 {
     public class CommandLineInterface
     {
-        [SubCommand] public Build Build { get; set; }
-        [SubCommand] public Connect Connect { get; set; }
-        [SubCommand] public Start Start { get; set; }
-        [SubCommand] public Stop Stop { get; set; }
+        [SubCommand] public Build Build { get; set; } = null!;
+        [SubCommand] public Connect Connect { get; set; } = null!;
+        [SubCommand] public Start Start { get; set; } = null!;
+        [SubCommand] public Stop Stop { get; set; } = null!;
 
         public Task<int> Interceptor(InterceptorExecutionDelegate next,
                                      IConsole console,

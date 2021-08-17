@@ -7,10 +7,10 @@ namespace Habitat.Cli
 {
     public static class Log
     {
-        private static IConsole _console;
+        private static IConsole? _console;
         private static bool _isVerbose;
 
-        public static void Configure(bool verbose, IConsole console = null) {
+        public static void Configure(bool verbose, IConsole console = null!) {
             _console = console;
             _isVerbose = verbose;
             Debug("Verbose Logging Enabled");

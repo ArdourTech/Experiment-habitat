@@ -39,12 +39,12 @@ namespace Habitat.Cli.Commands
     {
         [DefaultMethod]
         public async Task<int> RunAsync(IDocker docker, ConnectArgs args) {
-            if (!await docker.IsContainerRunningAsync(args.Name)) {
-                Log.Error($"Docker Container named {args.Name} is not running.");
+            var containerName = args.Name;
+            if (!await docker.IsContainerRunningAsync(containerName)) {
+                Log.Error($"Docker Container named {containerName} is not running.");
                 return Error.Result;
             }
-
-            Log.Info($"docker exec -it {args.Name} fish");
+            Log.Info($"docker exec -it {containerName} fish");
             return Success.Result;
         }
     }
