@@ -8,16 +8,19 @@ namespace Habitat.Cli
     {
         Task<bool> ImageExistsAsync(string imageName);
 
-        Task<string> RunningContainerIdAsync(string containerName);
+        Task<bool> NetworkExistsAsync(string networkName);
+
+        Task<string?> RunningContainerIdAsync(string containerName);
 
         Task<bool> IsContainerRunningAsync(string containerName);
 
-        Task<string> FindContainerIdAsync(string containerName);
+        Task<string?> FindContainerIdAsync(string containerName);
 
-        Task<string> CreateContainerAsync(string image,
-                                          string name,
-                                          bool withX11DisplayBinding = false,
-                                          bool withDockerBinding = false);
+        Task<string?> CreateContainerAsync(string image,
+                                           string name,
+                                           bool withX11DisplayBinding = false,
+                                           bool withDockerBinding = false,
+                                           string? networkName = null);
 
         Task<bool> RunContainerAsync(string containerId);
         Task<bool> StopContainerAsync(string containerId);

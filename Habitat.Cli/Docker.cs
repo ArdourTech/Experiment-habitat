@@ -6,8 +6,10 @@ using System.Threading;
 using System.Threading.Tasks;
 using Docker.DotNet;
 using Docker.DotNet.Models;
-using Habitat.Cli.Utils;
 using Newtonsoft.Json.Linq;
+using static Habitat.Cli.Utils.Objects;
+using static Habitat.Cli.Utils.Strings;
+using static Habitat.Cli.Utils.Zip;
 
 namespace Habitat.Cli
 {
@@ -29,29 +31,28 @@ namespace Habitat.Cli
             _instance = new DockerClientConfiguration().CreateClient();
         }
 
-        public async Task<string> CreateContainerAsync(string image,
-                                                       string name,
-                                                       bool withX11DisplayBinding = false,
-                                                       bool withDockerBinding = false) {
+        public async Task<string?> CreateContainerAsync(string image,
+                                                        string name,
+                                                        bool withX11DisplayBinding = false,
+                                                        bool withDockerBinding = false,
+                                                        string? networkName = null) {
             Log.Info($"Creating Container for {image} named {name}");
-            var env = new List<string>();
-            var mounts = new List<Mount>();
-            if (withX11DisplayBinding) env.Add("DISPLAY=host.docker.internal:0");
-            if (withDockerBinding) mounts.Add(DockerBindingMount);
+            var hostConfig = new HostConfig()
+                             .AttachMount(withDockerBinding ? DockerBindingMount : null)
+                             .AttachNetwork(networkName);
+
             var createParams = new CreateContainerParameters
             {
                 Name = name,
-                Env = env,
                 Image = image,
                 Tty = true,
                 AttachStderr = true,
                 AttachStdin = true,
                 AttachStdout = true,
-                HostConfig = new HostConfig
-                {
-                    Mounts = mounts
-                }
+                HostConfig = hostConfig
             };
+            if (withX11DisplayBinding) createParams.AddEnv("DISPLAY", "host.docker.internal:0");
+
             var container = await _instance.Containers.CreateContainerAsync(createParams, _cancellationToken);
             return container?.ID;
         }
@@ -88,14 +89,14 @@ namespace Habitat.Cli
                 NoCache = noCache,
                 Tags = new List<string> { tag }
             };
-            await using var tarball = Zip.TarballDirectory(workingDirectory.FullName, _cancellationToken);
+            await using var tarball = TarballDirectory(workingDirectory.FullName, _cancellationToken);
             var outputStream =
                 await _instance.Images.BuildImageFromDockerfileAsync(tarball, dockerBuildArgs, _cancellationToken);
             using var reader = new StreamReader(outputStream);
-            string line;
-            while (!reader.EndOfStream && Objects.NonNull(line = await reader.ReadLineAsync())) {
+            string? line;
+            while (!reader.EndOfStream && NonNull(line = await reader.ReadLineAsync())) {
                 var stream = JObject.Parse(line!).SelectToken("stream");
-                if (Objects.IsNull(stream)) continue;
+                if (IsNull(stream)) continue;
                 var value = stream!.Value<string>();
                 Log.Info(value);
             }
@@ -112,45 +113,40 @@ namespace Habitat.Cli
             return images.Any(image => image.RepoTags.Contains(listParams.MatchName));
         }
 
-        public async Task<string> RunningContainerIdAsync(string containerName) {
+        public async Task<bool> NetworkExistsAsync(string networkName) {
+            Log.Debug($"Looking for Networks named {networkName}");
+            var filters = new Dictionary<string, IDictionary<string, bool>>();
+            AddBasicFilter(filters, "name", networkName);
+            var networkListParams = new NetworksListParameters
+            {
+                Filters = filters
+            };
+            var networks = await _instance.Networks.ListNetworksAsync(networkListParams, _cancellationToken);
+            return networks.Any(network => network.Name.Equals(networkName));
+        }
+
+        public async Task<string?> RunningContainerIdAsync(string containerName) {
             Log.Debug($"Looking for existing running Container named {containerName}");
+            var filters = new Dictionary<string, IDictionary<string, bool>>();
+            AddBasicFilter(filters, "name", containerName);
+            AddBasicFilter(filters, "status", "running");
             var listParams = new ContainersListParameters
             {
                 All = true,
-                Filters = new Dictionary<string, IDictionary<string, bool>>
-                {
-                    {
-                        "name", new Dictionary<string, bool>
-                        {
-                            { containerName, true }
-                        }
-                    },
-                    {
-                        "status", new Dictionary<string, bool>
-                        {
-                            { "running", true }
-                        }
-                    }
-                }
+                Filters = filters
             };
             var results = await _instance.Containers.ListContainersAsync(listParams, _cancellationToken);
             return results.FirstOrDefault(ContainerNamed(containerName))?.ID;
         }
 
-        public async Task<string> FindContainerIdAsync(string containerName) {
+        public async Task<string?> FindContainerIdAsync(string containerName) {
             Log.Info($"Checking for existing Container named {containerName}");
+            var filters = new Dictionary<string, IDictionary<string, bool>>();
+            AddBasicFilter(filters, "name", containerName);
             var listParams = new ContainersListParameters
             {
                 All = true,
-                Filters = new Dictionary<string, IDictionary<string, bool>>
-                {
-                    {
-                        "name", new Dictionary<string, bool>
-                        {
-                            { containerName, true }
-                        }
-                    }
-                }
+                Filters = filters
             };
             var containers = await _instance.Containers.ListContainersAsync(listParams, _cancellationToken);
             return containers.FirstOrDefault(ContainerNamed(containerName))?.ID;
@@ -158,7 +154,21 @@ namespace Habitat.Cli
 
         public async Task<bool> IsContainerRunningAsync(string containerName) {
             var runningContainerId = await RunningContainerIdAsync(containerName);
-            return Strings.IsNotBlank(runningContainerId);
+            return IsNotBlank(runningContainerId);
+        }
+
+        private static void AttachNetwork(HostConfig config, string? networkName) {
+            if (IsNotBlank(networkName)) config.NetworkMode = networkName;
+        }
+
+        private static void AddBasicFilter(IDictionary<string, IDictionary<string, bool>> filters, string key,
+                                           string value) {
+            if (IsBlank(value)) return;
+            var nameFilter = new Dictionary<string, bool>
+            {
+                { value, true }
+            };
+            filters.Add(key, nameFilter);
         }
 
         private static Func<ContainerListResponse, bool> ContainerNamed(string name) {

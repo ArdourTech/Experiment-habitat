@@ -15,6 +15,7 @@
         <PublishReadyToRun>true</PublishReadyToRun>
         <PublishReadyToRunShowWarnings>true</PublishReadyToRunShowWarnings>
         <IncludeAllContentForSelfExtract>true</IncludeAllContentForSelfExtract>
+        <Nullable>enable</Nullable>
     </PropertyGroup>
 
     <ItemGroup>

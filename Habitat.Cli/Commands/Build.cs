@@ -26,7 +26,7 @@ namespace Habitat.Cli.Commands
         [Option(ShortName = "p",
                 LongName = "password",
                 Description = "Habitat User Password")]
-        public Password Password { get; set; }
+        public Password Password { get; set; } = null!;
 
         [Option(ShortName = "d",
                 LongName = "directory",
@@ -46,7 +46,7 @@ namespace Habitat.Cli.Commands
         [Option(ShortName = "t",
                 LongName = "tag",
                 Description = "Image Tag")]
-        public string Tag { get; set; }
+        public string Tag { get; set; } = null!;
     }
 
     public class BuildArgsValidator : AbstractValidator<BuildArgs>
@@ -80,17 +80,19 @@ namespace Habitat.Cli.Commands
         // ReSharper disable once UnusedMember.Global
         [DefaultMethod]
         public async Task<int> RunAsync(IDocker docker, BuildArgs args) {
+            var userName = args.User;
             var buildArgs = new Dictionary<string, string>
             {
-                { "HABITAT_USER", args.User },
+                { "HABITAT_USER", userName },
                 { "HABITAT_USER_PASSWORD", args.Password.GetPassword() }
             };
-
-            Log.Info($"Building Docker Image from {args.Dockerfile.FullName} " +
-                     $"for user {args.User} " +
-                     $"with context {args.WorkingDirectory.FullName}");
-            await docker.BuildContainerAsync(args.Dockerfile,
-                                             args.WorkingDirectory,
+            var workingDirectory = args.WorkingDirectory;
+            var dockerfile = args.Dockerfile;
+            Log.Info($"Building Docker Image from {dockerfile.FullName} " +
+                     $"for user {userName} " +
+                     $"with context {workingDirectory.FullName}");
+            await docker.BuildContainerAsync(dockerfile,
+                                             workingDirectory,
                                              args.Tag,
                                              buildArgs,
                                              args.NoCache);
