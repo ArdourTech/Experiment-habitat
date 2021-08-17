@@ -76,6 +76,9 @@ Options:
 
   --with-x11-display
   Adds an Environment variable to bind the X11 Display to the host on container creation
+
+  --with-docker
+  Binds the Host Docker Socket to the running container; allowing access to the Host's Docker Engine
 ```
 
 ### Stop

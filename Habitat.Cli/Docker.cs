@@ -16,6 +16,14 @@ namespace Habitat.Cli
         private readonly CancellationToken _cancellationToken;
         private readonly DockerClient _instance;
 
+        private static readonly Mount DockerBindingMount = new Mount
+        {
+            Source = "/var/run/docker.sock",
+            Target = "/var/run/docker.sock",
+            Type = "bind",
+            ReadOnly = false
+        };
+
         public Docker(CancellationToken cancellationToken = default)
         {
             _cancellationToken = cancellationToken;
@@ -25,12 +33,14 @@ namespace Habitat.Cli
         public async Task<string> CreateContainerAsync(
             string image,
             string name,
-            bool withX11DisplayBinding = false)
+            bool withX11DisplayBinding = false,
+            bool withDockerBinding = false)
         {
             Log.Info($"Creating Container for {image} named {name}");
             var env = new List<string>();
+            var mounts = new List<Mount>();
             if (withX11DisplayBinding) env.Add("DISPLAY=host.docker.internal:0");
-
+            if (withDockerBinding) mounts.Add(DockerBindingMount);
             var createParams = new CreateContainerParameters
             {
                 Name = name,
@@ -42,16 +52,7 @@ namespace Habitat.Cli
                 AttachStdout = true,
                 HostConfig = new HostConfig
                 {
-                    Mounts = new List<Mount>
-                    {
-                        new()
-                        {
-                            Source = "/var/run/docker.sock",
-                            Target = "/var/run/docker.sock",
-                            Type = "bind",
-                            ReadOnly = false
-                        }
-                    }
+                    Mounts = mounts
                 }
             };
             var container = await _instance.Containers.CreateContainerAsync(createParams, _cancellationToken);
