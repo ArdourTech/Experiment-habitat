@@ -13,10 +13,7 @@ namespace Habitat.Cli
 {
     public class Docker : IDocker
     {
-        private readonly CancellationToken _cancellationToken;
-        private readonly DockerClient _instance;
-
-        private static readonly Mount DockerBindingMount = new Mount
+        private static readonly Mount DockerBindingMount = new()
         {
             Source = "/var/run/docker.sock",
             Target = "/var/run/docker.sock",
@@ -24,18 +21,18 @@ namespace Habitat.Cli
             ReadOnly = false
         };
 
-        public Docker(CancellationToken cancellationToken = default)
-        {
+        private readonly CancellationToken _cancellationToken;
+        private readonly DockerClient _instance;
+
+        public Docker(CancellationToken cancellationToken = default) {
             _cancellationToken = cancellationToken;
             _instance = new DockerClientConfiguration().CreateClient();
         }
 
-        public async Task<string> CreateContainerAsync(
-            string image,
-            string name,
-            bool withX11DisplayBinding = false,
-            bool withDockerBinding = false)
-        {
+        public async Task<string> CreateContainerAsync(string image,
+                                                       string name,
+                                                       bool withX11DisplayBinding = false,
+                                                       bool withDockerBinding = false) {
             Log.Info($"Creating Container for {image} named {name}");
             var env = new List<string>();
             var mounts = new List<Mount>();
@@ -59,16 +56,14 @@ namespace Habitat.Cli
             return container?.ID;
         }
 
-        public async Task<bool> RunContainerAsync(string containerId)
-        {
+        public async Task<bool> RunContainerAsync(string containerId) {
             Log.Info($"Starting Container {containerId}");
             var startParams = new ContainerStartParameters();
             return await _instance.Containers
-                .StartContainerAsync(containerId, startParams, _cancellationToken);
+                                  .StartContainerAsync(containerId, startParams, _cancellationToken);
         }
 
-        public async Task<bool> StopContainerAsync(string containerId)
-        {
+        public async Task<bool> StopContainerAsync(string containerId) {
             Log.Info($"Stopping Container {containerId}");
             var stopParams = new ContainerStopParameters
             {
@@ -77,16 +72,15 @@ namespace Habitat.Cli
             return await _instance.Containers.StopContainerAsync(containerId, stopParams, _cancellationToken);
         }
 
-        public async Task BuildContainerAsync(
-            FileInfo dockerfile,
-            DirectoryInfo workingDirectory,
-            string tag,
-            Dictionary<string, string> buildArgs,
-            bool noCache = false)
-        {
+        public async Task BuildContainerAsync(FileInfo dockerfile,
+                                              DirectoryInfo workingDirectory,
+                                              string tag,
+                                              Dictionary<string, string> buildArgs,
+                                              bool noCache = false) {
             var dockerfileName = dockerfile.FullName
-                .Replace(workingDirectory.FullName, "")
-                .Replace('\\', '/').TrimStart('/');
+                                           .Replace(workingDirectory.FullName, "")
+                                           .Replace('\\', '/')
+                                           .TrimStart('/');
             var dockerBuildArgs = new ImageBuildParameters
             {
                 Dockerfile = dockerfileName,
@@ -99,8 +93,7 @@ namespace Habitat.Cli
                 await _instance.Images.BuildImageFromDockerfileAsync(tarball, dockerBuildArgs, _cancellationToken);
             using var reader = new StreamReader(outputStream);
             string line;
-            while (!reader.EndOfStream && Objects.NonNull(line = await reader.ReadLineAsync()))
-            {
+            while (!reader.EndOfStream && Objects.NonNull(line = await reader.ReadLineAsync())) {
                 var stream = JObject.Parse(line!).SelectToken("stream");
                 if (Objects.IsNull(stream)) continue;
                 var value = stream!.Value<string>();
@@ -108,8 +101,7 @@ namespace Habitat.Cli
             }
         }
 
-        public async Task<bool> ImageExistsAsync(string imageName)
-        {
+        public async Task<bool> ImageExistsAsync(string imageName) {
             Log.Debug($"Looking for Images matching name {imageName}");
             var listParams = new ImagesListParameters
             {
@@ -120,8 +112,7 @@ namespace Habitat.Cli
             return images.Any(image => image.RepoTags.Contains(listParams.MatchName));
         }
 
-        public async Task<string> RunningContainerIdAsync(string containerName)
-        {
+        public async Task<string> RunningContainerIdAsync(string containerName) {
             Log.Debug($"Looking for existing running Container named {containerName}");
             var listParams = new ContainersListParameters
             {
@@ -146,8 +137,7 @@ namespace Habitat.Cli
             return results.FirstOrDefault(ContainerNamed(containerName))?.ID;
         }
 
-        public async Task<string> FindContainerIdAsync(string containerName)
-        {
+        public async Task<string> FindContainerIdAsync(string containerName) {
             Log.Info($"Checking for existing Container named {containerName}");
             var listParams = new ContainersListParameters
             {
@@ -166,14 +156,12 @@ namespace Habitat.Cli
             return containers.FirstOrDefault(ContainerNamed(containerName))?.ID;
         }
 
-        public async Task<bool> IsContainerRunningAsync(string containerName)
-        {
+        public async Task<bool> IsContainerRunningAsync(string containerName) {
             var runningContainerId = await RunningContainerIdAsync(containerName);
             return Strings.IsNotBlank(runningContainerId);
         }
 
-        private static Func<ContainerListResponse, bool> ContainerNamed(string name)
-        {
+        private static Func<ContainerListResponse, bool> ContainerNamed(string name) {
             return l => l.Names.Contains($"/{name}");
         }
     }

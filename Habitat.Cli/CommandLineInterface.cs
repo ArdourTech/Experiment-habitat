@@ -12,11 +12,9 @@ namespace Habitat.Cli
         [SubCommand] public Start Start { get; set; }
         [SubCommand] public Stop Stop { get; set; }
 
-        public Task<int> Interceptor(
-            InterceptorExecutionDelegate next,
-            IConsole console,
-            VerbosityArgs verbosityArgs)
-        {
+        public Task<int> Interceptor(InterceptorExecutionDelegate next,
+                                     IConsole console,
+                                     VerbosityArgs verbosityArgs) {
             Log.Configure(verbosityArgs.Verbose, console);
             return next();
         }
