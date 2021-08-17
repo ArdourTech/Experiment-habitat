@@ -22,13 +22,19 @@ namespace Habitat.Cli
             _instance = new DockerClientConfiguration().CreateClient();
         }
 
-        public async Task<string> CreateContainerAsync(string image, string name)
+        public async Task<string> CreateContainerAsync(
+            string image,
+            string name,
+            bool withX11DisplayBinding = false)
         {
             Log.Info($"Creating Container for {image} named {name}");
+            var env = new List<string>();
+            if (withX11DisplayBinding) env.Add("DISPLAY=host.docker.internal:0");
+
             var createParams = new CreateContainerParameters
             {
                 Name = name,
-                Env = new List<string> { "DISPLAY=host.docker.internal:0" },
+                Env = env,
                 Image = image,
                 Tty = true,
                 AttachStderr = true,
@@ -38,14 +44,14 @@ namespace Habitat.Cli
                 {
                     Mounts = new List<Mount>
                     {
-                        new Mount
+                        new()
                         {
                             Source = "/var/run/docker.sock",
                             Target = "/var/run/docker.sock",
                             Type = "bind",
-                            ReadOnly = false,
+                            ReadOnly = false
                         }
-                    },
+                    }
                 }
             };
             var container = await _instance.Containers.CreateContainerAsync(createParams, _cancellationToken);

@@ -68,11 +68,14 @@ Usage: habitat.exe start
 
 Options:
 
-  -i | --image  <TEXT>
+  -i | --image        <TEXT>
   Image to Run
 
-  -n | --name   <TEXT>  [habitat]
+  -n | --name         <TEXT>  [habitat]
   Name for the Container
+
+  --with-x11-display
+  Adds an Environment variable to bind the X11 Display to the host on container creation
 ```
 
 ### Stop
