@@ -17,7 +17,8 @@ namespace Habitat.Cli
         Task<string> CreateContainerAsync(
             string image,
             string name,
-            bool withX11DisplayBinding = false);
+            bool withX11DisplayBinding = false,
+            bool withDockerBinding = false);
 
         Task<bool> RunContainerAsync(string containerId);
         Task<bool> StopContainerAsync(string containerId);
