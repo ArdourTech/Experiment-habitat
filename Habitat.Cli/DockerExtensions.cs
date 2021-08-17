@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using Docker.DotNet.Models;
-using Habitat.Cli.Utils;
 using static Habitat.Cli.Utils.Objects;
 using static Habitat.Cli.Utils.Strings;
 
@@ -11,9 +10,7 @@ namespace Habitat.Cli
         public static HostConfig AttachMount(this HostConfig config, Mount? mount) {
             if (IsNull(mount)) return config;
             var configMounts = config.Mounts;
-            if (IsNull(configMounts)) {
-                configMounts = new List<Mount>();
-            }
+            if (IsNull(configMounts)) configMounts = new List<Mount>();
 
             configMounts.Add(mount);
             config.Mounts = configMounts;
@@ -21,9 +18,7 @@ namespace Habitat.Cli
         }
 
         public static HostConfig AttachNetwork(this HostConfig config, string? networkName) {
-            if (IsNotBlank(networkName)) {
-                config.NetworkMode = networkName;
-            }
+            if (IsNotBlank(networkName)) config.NetworkMode = networkName;
 
             return config;
         }

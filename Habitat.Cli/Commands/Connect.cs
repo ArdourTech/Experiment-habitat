@@ -44,6 +44,7 @@ namespace Habitat.Cli.Commands
                 Log.Error($"Docker Container named {containerName} is not running.");
                 return Error.Result;
             }
+
             Log.Info($"docker exec -it {containerName} fish");
             return Success.Result;
         }

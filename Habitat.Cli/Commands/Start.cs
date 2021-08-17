@@ -1,4 +1,3 @@
-using System;
 using System.Threading.Tasks;
 using CommandDotNet;
 using FluentValidation;
@@ -68,12 +67,11 @@ namespace Habitat.Cli.Commands
             }
 
             var containerId = await docker.FindContainerIdAsync(containerName);
-            if (IsBlank(containerId)) {
+            if (IsBlank(containerId))
                 containerId = await docker.CreateContainerAsync(containerImage,
                                                                 containerName,
                                                                 args.WithX11Display,
                                                                 args.WithDocker);
-            }
 
             var runContainer = await docker.RunContainerAsync(containerId!);
             return runContainer ? Success.Result : Error.Result;

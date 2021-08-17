@@ -6,9 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Docker.DotNet;
 using Docker.DotNet.Models;
-using Habitat.Cli.Utils;
 using Newtonsoft.Json.Linq;
-using static Habitat.Cli.DockerExtensions;
 using static Habitat.Cli.Utils.Objects;
 using static Habitat.Cli.Utils.Strings;
 using static Habitat.Cli.Utils.Zip;
@@ -33,12 +31,6 @@ namespace Habitat.Cli
             _instance = new DockerClientConfiguration().CreateClient();
         }
 
-        private static void AttachNetwork(HostConfig config, string? networkName) {
-            if (IsNotBlank(networkName)) {
-                config.NetworkMode = networkName;
-            }
-        }
-
         public async Task<string?> CreateContainerAsync(string image,
                                                         string name,
                                                         bool withX11DisplayBinding = false,
@@ -57,11 +49,9 @@ namespace Habitat.Cli
                 AttachStderr = true,
                 AttachStdin = true,
                 AttachStdout = true,
-                HostConfig = hostConfig,
+                HostConfig = hostConfig
             };
-            if (withX11DisplayBinding) {
-                createParams.AddEnv("DISPLAY", "host.docker.internal:0");
-            }
+            if (withX11DisplayBinding) createParams.AddEnv("DISPLAY", "host.docker.internal:0");
 
             var container = await _instance.Containers.CreateContainerAsync(createParams, _cancellationToken);
             return container?.ID;
@@ -123,21 +113,11 @@ namespace Habitat.Cli
             return images.Any(image => image.RepoTags.Contains(listParams.MatchName));
         }
 
-        private static void AddBasicFilter(IDictionary<string, IDictionary<string, bool>> filters, string key,
-                                           string value) {
-            if (IsBlank(value)) return;
-            var nameFilter = new Dictionary<string, bool>
-            {
-                { value, true }
-            };
-            filters.Add(key, nameFilter);
-        }
-
         public async Task<bool> NetworkExistsAsync(string networkName) {
             Log.Debug($"Looking for Networks named {networkName}");
             var filters = new Dictionary<string, IDictionary<string, bool>>();
             AddBasicFilter(filters, "name", networkName);
-            var networkListParams = new NetworksListParameters()
+            var networkListParams = new NetworksListParameters
             {
                 Filters = filters
             };
@@ -175,6 +155,20 @@ namespace Habitat.Cli
         public async Task<bool> IsContainerRunningAsync(string containerName) {
             var runningContainerId = await RunningContainerIdAsync(containerName);
             return IsNotBlank(runningContainerId);
+        }
+
+        private static void AttachNetwork(HostConfig config, string? networkName) {
+            if (IsNotBlank(networkName)) config.NetworkMode = networkName;
+        }
+
+        private static void AddBasicFilter(IDictionary<string, IDictionary<string, bool>> filters, string key,
+                                           string value) {
+            if (IsBlank(value)) return;
+            var nameFilter = new Dictionary<string, bool>
+            {
+                { value, true }
+            };
+            filters.Add(key, nameFilter);
         }
 
         private static Func<ContainerListResponse, bool> ContainerNamed(string name) {
