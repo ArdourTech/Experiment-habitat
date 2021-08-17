@@ -2,6 +2,7 @@ using System.Threading.Tasks;
 using CommandDotNet;
 using FluentValidation;
 using FluentValidation.Attributes;
+using static System.Environment;
 using static CommandDotNet.ExitCodes;
 using static Habitat.Cli.Utils.Strings;
 
@@ -22,7 +23,7 @@ namespace Habitat.Cli.Commands
 
         [Option(LongName = "network",
                 Description = "Network to connect the Container to")]
-        public string? Network { get; set; }
+        public string? Network { get; set; } = "";
 
         [Option(LongName = "with-x11-display",
                 Description =
@@ -66,12 +67,21 @@ namespace Habitat.Cli.Commands
                 return Error.Result;
             }
 
+            var networkName = args.Network;
+            if (IsNotBlank(networkName) && !await docker.NetworkExistsAsync(networkName!)) {
+                Log.Error($"Docker Network {networkName} was not found." +
+                          $"{NewLine}" +
+                          $"You can create one by running `docker network create --driver bridge {networkName}`");
+                return Error.Result;
+            }
+
             var containerId = await docker.FindContainerIdAsync(containerName);
             if (IsBlank(containerId))
                 containerId = await docker.CreateContainerAsync(containerImage,
                                                                 containerName,
                                                                 args.WithX11Display,
-                                                                args.WithDocker);
+                                                                args.WithDocker,
+                                                                networkName);
 
             var runContainer = await docker.RunContainerAsync(containerId!);
             return runContainer ? Success.Result : Error.Result;
