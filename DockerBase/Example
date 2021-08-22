@@ -1,0 +1,14 @@
+FROM habitat:2021-08-22
+LABEL HABITAT_WITH_X11=true
+LABEL HABITAT_WITH_DOCKER=true
+
+USER root
+COPY rename_habitat_user.sh ./
+RUN bash rename_habitat_user.sh
+RUN rm -f rename_habitat_user.sh
+
+COPY install_docker.sh ./
+RUN bash install_docker.sh && rm -f install_docker.sh
+
+USER $HABITAT_USER
+WORKDIR /home/$HABITAT_USER

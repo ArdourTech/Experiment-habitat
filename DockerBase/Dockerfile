@@ -1,6 +1,9 @@
 FROM ubuntu:21.04
 LABEL maintainer="Alexander Scott <xander@ardour.tech>"
 LABEL name=ardourtech/habitat
+ARG JAVA_VERSION=adopt@1.15.0-2
+ARG CLOJURE_VERSION=1.10.3.855
+ARG USER=habitat
 
 RUN sed -i -e 's/http:\/\/archive\.ubuntu\.com\/ubuntu\//mirror:\/\/mirrors\.ubuntu\.com\/mirrors\.txt/' /etc/apt/sources.list
 
@@ -39,9 +42,6 @@ RUN DEBIAN_FRONTEND=noninteractive \
 	zip && \
 	apt-get clean
 
-ARG JAVA_VERSION=adopt@1.15.0-2
-ARG CLOJURE_VERSION=1.10.3.855
-ARG USER=habitat
 RUN useradd -s $(which fish) -d /home/$USER -m -G sudo $USER
 USER $USER
 WORKDIR /home/$USER
@@ -49,6 +49,3 @@ COPY setup.sh verify.sh ./
 RUN bash setup.sh && \
 	bash verify.sh && \
 	rm -f setup.sh verify.sh
-
-LABEL HABITAT_WITH_X11=true
-LABEL HABITAT_WITH_DOCKER=true
