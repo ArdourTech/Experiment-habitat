@@ -31,15 +31,17 @@ namespace Habitat.Cli
             _instance = new DockerClientConfiguration().CreateClient();
         }
 
-        public async Task<string?> CreateContainerAsync(string image,
-                                                        string name,
-                                                        bool withX11DisplayBinding = false,
-                                                        bool withDockerBinding = false,
-                                                        string? networkName = null) {
+        public async Task<string?> CreateContainerAsync(string image, string name, string? networkName = null) {
+            var imageDefinition = await FindImageAsync(image);
+            var labels = imageDefinition!.Labels;
             Log.Info($"Creating Container for {image} named {name}");
+            //FIXME Network definitions from within the container
             var hostConfig = new HostConfig()
-                             .AttachMount(withDockerBinding ? DockerBindingMount : null)
-                             .AttachNetwork(networkName);
+                .AttachNetwork(networkName);
+
+            if (labels.ContainsKey("HABITAT_WITH_DOCKER")) {
+                hostConfig.AttachMount(DockerBindingMount);
+            }
 
             var createParams = new CreateContainerParameters
             {
@@ -51,7 +53,9 @@ namespace Habitat.Cli
                 AttachStdout = true,
                 HostConfig = hostConfig
             };
-            if (withX11DisplayBinding) createParams.AddEnv("DISPLAY", "host.docker.internal:0");
+            if (labels.ContainsKey("HABITAT_WITH_X11")) {
+                createParams.AddEnv("DISPLAY", "host.docker.internal:0");
+            }
 
             var container = await _instance.Containers.CreateContainerAsync(createParams, _cancellationToken);
             return container?.ID;
@@ -91,8 +95,9 @@ namespace Habitat.Cli
                 Tags = new List<string> { tag }
             };
             await using var tarball = TarballDirectory(workingDirectory.FullName, _cancellationToken);
-            var outputStream =
-                await _instance.Images.BuildImageFromDockerfileAsync(tarball, dockerBuildArgs, _cancellationToken);
+            var outputStream = await _instance
+                                     .Images
+                                     .BuildImageFromDockerfileAsync(tarball, dockerBuildArgs, _cancellationToken);
             using var reader = new StreamReader(outputStream);
             string? line;
             while (!reader.EndOfStream && NonNull(line = await reader.ReadLineAsync())) {
@@ -104,14 +109,8 @@ namespace Habitat.Cli
         }
 
         public async Task<bool> ImageExistsAsync(string imageName) {
-            Log.Debug($"Looking for Images matching name {imageName}");
-            var listParams = new ImagesListParameters
-            {
-                MatchName = imageName,
-                All = false
-            };
-            var images = await _instance.Images.ListImagesAsync(listParams, _cancellationToken);
-            return images.Any(image => image.RepoTags.Contains(listParams.MatchName));
+            var image = await FindImageAsync(imageName);
+            return NonNull(image);
         }
 
         public async Task<bool> NetworkExistsAsync(string networkName) {
@@ -142,15 +141,8 @@ namespace Habitat.Cli
 
         public async Task<string?> FindContainerIdAsync(string containerName) {
             Log.Info($"Checking for existing Container named {containerName}");
-            var filters = new Dictionary<string, IDictionary<string, bool>>();
-            AddBasicFilter(filters, "name", containerName);
-            var listParams = new ContainersListParameters
-            {
-                All = true,
-                Filters = filters
-            };
-            var containers = await _instance.Containers.ListContainersAsync(listParams, _cancellationToken);
-            return containers.FirstOrDefault(ContainerNamed(containerName))?.ID;
+            var container = await FindContainerAsync(containerName);
+            return container?.ID;
         }
 
         public async Task<bool> IsContainerRunningAsync(string containerName) {
@@ -159,9 +151,16 @@ namespace Habitat.Cli
         }
 
         public async Task<string?> GetEntryPointAsync(string containerName) {
-            var runningContainerId = await RunningContainerIdAsync(containerName);
-            if (IsBlank(runningContainerId)) return null;
+            var container = await FindContainerAsync(containerName);
+            return container?.Command;
+        }
 
+        public async Task<IDictionary<string, string>?> GetLabelsAsync(string containerName) {
+            var container = await FindContainerAsync(containerName);
+            return container?.Labels;
+        }
+
+        private async Task<ContainerListResponse?> FindContainerAsync(string containerName) {
             var filters = new Dictionary<string, IDictionary<string, bool>>();
             AddBasicFilter(filters, "name", containerName);
             var listParams = new ContainersListParameters
@@ -170,12 +169,18 @@ namespace Habitat.Cli
                 Filters = filters
             };
             var containers = await _instance.Containers.ListContainersAsync(listParams, _cancellationToken);
-            var container = containers.First();
-            return container.Command;
+            return containers.FirstOrDefault(ContainerNamed(containerName));
         }
 
-        private static void AttachNetwork(HostConfig config, string? networkName) {
-            if (IsNotBlank(networkName)) config.NetworkMode = networkName;
+        private async Task<ImagesListResponse?> FindImageAsync(string imageName) {
+            Log.Debug($"Looking for Images matching name {imageName}");
+            var listParams = new ImagesListParameters
+            {
+                MatchName = imageName,
+                All = false
+            };
+            var images = await _instance.Images.ListImagesAsync(listParams, _cancellationToken);
+            return images.FirstOrDefault(ImageNamed(imageName));
         }
 
         private static void AddBasicFilter(IDictionary<string, IDictionary<string, bool>> filters,
@@ -191,6 +196,10 @@ namespace Habitat.Cli
 
         private static Func<ContainerListResponse, bool> ContainerNamed(string name) {
             return l => l.Names.Contains($"/{name}");
+        }
+
+        private static Func<ImagesListResponse, bool> ImageNamed(string name) {
+            return i => i.RepoTags.Contains($"{name}");
         }
     }
 }

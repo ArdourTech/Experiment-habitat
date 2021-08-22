@@ -16,11 +16,7 @@ namespace Habitat.Cli
 
         Task<string?> FindContainerIdAsync(string containerName);
 
-        Task<string?> CreateContainerAsync(string image,
-                                           string name,
-                                           bool withX11DisplayBinding = false,
-                                           bool withDockerBinding = false,
-                                           string? networkName = null);
+        Task<string?> CreateContainerAsync(string image, string name, string? networkName = null);
 
         Task<bool> RunContainerAsync(string containerId);
         Task<bool> StopContainerAsync(string containerId);
@@ -32,5 +28,6 @@ namespace Habitat.Cli
                                  bool noCache = false);
 
         Task<string?> GetEntryPointAsync(string containerName);
+        Task<IDictionary<string, string>?> GetLabelsAsync(string containerName);
     }
 }
