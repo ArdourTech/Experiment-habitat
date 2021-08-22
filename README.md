@@ -88,6 +88,9 @@ LABEL HABITAT_WITH_X11=true
 #Instructs the Habitat CLI to bind the Hosts Docker sock on Container Start
 LABEL HABITAT_WITH_DOCKER=true
 
+#Instructs the Habitat CLI to create the Networks and attach the Container to them
+LABEL HABITAT_NETWORKS="habitat,dev"
+
 # Add the User as a new Ubuntu User
 USER root
 RUN groupmod --new-name $HABITAT_USER docker

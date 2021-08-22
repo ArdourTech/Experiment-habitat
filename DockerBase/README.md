@@ -1,11 +1,10 @@
 # Habitat Docker Base
 
-> *STATUS: In Development. Not yet ready for Production*
-
 ![docker-version](https://img.shields.io/docker/v/ardourtech/habitat?sort=date)
 ![docker-size](https://img.shields.io/docker/image-size/ardourtech/habitat?sort=date)
 
-A Dockerized (Ubuntu based) Developer Environment with assistive CLI Tooling
+A Dockerized (Ubuntu based) Developer Environment Foundation. Intended to be
+used in-conjunction with [habitat](https://github.com/ardourtech/habitat).
 
 ## What's Installed?
 
