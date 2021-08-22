@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 using CommandDotNet;
 using FluentValidation;
@@ -12,12 +13,7 @@ namespace Habitat.Cli.Commands
         [Option(ShortName = "n",
                 LongName = "name",
                 Description = "Name for the Container")]
-        public string Name { get; set; } = "habitat";
-
-        [Option(ShortName = "c",
-                LongName = "command",
-                Description = "Command to exec")]
-        public string Command { get; set; } = "fish";
+        public string Name { get; set; }
     }
 
     public class ConnectArgsValidator : AbstractValidator<ConnectArgs>
@@ -26,10 +22,6 @@ namespace Habitat.Cli.Commands
             RuleFor(x => x.Name)
                 .NotEmpty()
                 .WithMessage("The Name must not be blank or empty");
-
-            RuleFor(x => x.Command)
-                .NotEmpty()
-                .WithMessage("The Command must not be blank or empty");
         }
     }
 
@@ -44,8 +36,8 @@ namespace Habitat.Cli.Commands
                 Log.Error($"Docker Container named {containerName} is not running.");
                 return Error.Result;
             }
-
-            Log.Info($"docker exec -it {containerName} fish");
+            var entryPoint = await docker.GetEntryPointAsync(containerName);
+            Log.Info($"docker exec -it {containerName} {entryPoint}");
             return Success.Result;
         }
     }

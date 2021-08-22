@@ -60,8 +60,9 @@ namespace Habitat.Cli
         public async Task<bool> RunContainerAsync(string containerId) {
             Log.Info($"Starting Container {containerId}");
             var startParams = new ContainerStartParameters();
-            return await _instance.Containers
-                                  .StartContainerAsync(containerId, startParams, _cancellationToken);
+            return await _instance
+                         .Containers
+                         .StartContainerAsync(containerId, startParams, _cancellationToken);
         }
 
         public async Task<bool> StopContainerAsync(string containerId) {
@@ -161,7 +162,8 @@ namespace Habitat.Cli
             if (IsNotBlank(networkName)) config.NetworkMode = networkName;
         }
 
-        private static void AddBasicFilter(IDictionary<string, IDictionary<string, bool>> filters, string key,
+        private static void AddBasicFilter(IDictionary<string, IDictionary<string, bool>> filters,
+                                           string key,
                                            string value) {
             if (IsBlank(value)) return;
             var nameFilter = new Dictionary<string, bool>
@@ -173,6 +175,24 @@ namespace Habitat.Cli
 
         private static Func<ContainerListResponse, bool> ContainerNamed(string name) {
             return l => l.Names.Contains($"/{name}");
+        }
+
+        public async Task<string?> GetEntryPointAsync(string containerName) {
+            var runningContainerId = await RunningContainerIdAsync(containerName);
+            if (IsBlank(runningContainerId)) {
+                return null;
+            }
+
+            var filters = new Dictionary<string, IDictionary<string, bool>>();
+            AddBasicFilter(filters, "name", containerName);
+            var listParams = new ContainersListParameters
+            {
+                All = true,
+                Filters = filters
+            };
+            var containers = await _instance.Containers.ListContainersAsync(listParams, _cancellationToken);
+            var container = containers.First();
+            return container.Command;
         }
     }
 }

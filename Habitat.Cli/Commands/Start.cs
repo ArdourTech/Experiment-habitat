@@ -56,6 +56,9 @@ namespace Habitat.Cli.Commands
         [DefaultMethod]
         public async Task<int> RunAsync(IDocker docker, StartArgs args) {
             var containerName = args.Name;
+            //TODO Find Volumes and Networks Based on Container Labels
+            //Create Volumes and Networks if they do not exist
+
             if (await docker.IsContainerRunningAsync(containerName)) {
                 Log.Info($"Docker Container named {containerName} is already running.");
                 return Success.Result;
@@ -83,7 +86,10 @@ namespace Habitat.Cli.Commands
                                                                 args.WithDocker,
                                                                 networkName);
 
+            //Mount all volumes to volume root
             var runContainer = await docker.RunContainerAsync(containerId!);
+            //Bind other networks (if multiple)
+
             return runContainer ? Success.Result : Error.Result;
         }
     }

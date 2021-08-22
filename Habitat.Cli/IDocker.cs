@@ -30,5 +30,7 @@ namespace Habitat.Cli
                                  string tag,
                                  Dictionary<string, string> buildArgs,
                                  bool noCache = false);
+
+        Task<string?> GetEntryPointAsync(string containerName);
     }
 }
