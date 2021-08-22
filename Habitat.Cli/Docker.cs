@@ -40,6 +40,7 @@ namespace Habitat.Cli
                 .AttachNetwork(networkName);
 
             if (labels.ContainsKey("HABITAT_WITH_DOCKER")) {
+                Log.Debug($"Binding Host Docker Sock to Container {name}");
                 hostConfig.AttachMount(DockerBindingMount);
             }
 
@@ -54,6 +55,7 @@ namespace Habitat.Cli
                 HostConfig = hostConfig
             };
             if (labels.ContainsKey("HABITAT_WITH_X11")) {
+                Log.Debug($"Binding Host X11 Display to Container {name}");
                 createParams.AddEnv("DISPLAY", "host.docker.internal:0");
             }
 
