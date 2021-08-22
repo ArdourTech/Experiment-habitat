@@ -9,6 +9,7 @@ RUN apt update -y && apt upgrade -y &&	apt-get clean
 RUN DEBIAN_FRONTEND=noninteractive \
 	apt-get install -f -y --fix-missing \
 	software-properties-common \
+    ca-certificates
 
 RUN apt-add-repository ppa:fish-shell/release-3
 
@@ -48,3 +49,6 @@ COPY setup.sh verify.sh ./
 RUN bash setup.sh && \
 	bash verify.sh && \
 	rm -f setup.sh verify.sh
+
+LABEL HABITAT_WITH_X11=true
+LABEL HABITAT_WITH_DOCKER=true
