@@ -20,10 +20,6 @@ namespace Habitat.Cli.Commands
                 LongName = "name",
                 Description = "Name for the Container")]
         public string Name { get; set; } = "habitat";
-
-        [Option(LongName = "network",
-                Description = "Network to connect the Container to. This value is only used during Container creation")]
-        public string? Network { get; set; } = "";
     }
 
     public class StartArgsValidator : AbstractValidator<StartArgs>
@@ -46,7 +42,6 @@ namespace Habitat.Cli.Commands
         [DefaultMethod]
         public async Task<int> RunAsync(IDocker docker, StartArgs args) {
             var containerName = args.Name;
-            //TODO Find Volumes and Networks Based on Container Labels
             //Create Volumes and Networks if they do not exist
 
             if (await docker.IsContainerRunningAsync(containerName)) {
@@ -60,21 +55,17 @@ namespace Habitat.Cli.Commands
                 return Error.Result;
             }
 
-            var networkName = args.Network;
-            if (IsNotBlank(networkName) && !await docker.NetworkExistsAsync(networkName!)) {
-                Log.Error($"Docker Network {networkName} was not found." +
-                          $"{NewLine}" +
-                          $"You can create one by running `docker network create --driver bridge {networkName}`");
-                return Error.Result;
+            var containerId = await docker.FindContainerIdAsync(containerName);
+            if (IsBlank(containerId)) {
+                containerId = await docker.CreateContainerAsync(containerImage, containerName);
             }
 
-            var containerId = await docker.FindContainerIdAsync(containerName);
-            if (IsBlank(containerId))
-                containerId = await docker.CreateContainerAsync(containerImage, containerName, networkName);
-
-            //Mount all volumes to volume root
+            //TODO Mount all volumes to volume root
             var runContainer = await docker.RunContainerAsync(containerId!);
             //Bind other networks (if multiple)
+            if (runContainer) {
+                await docker.BindNetworksAsync(containerName);
+            }
 
             return runContainer ? Success.Result : Error.Result;
         }

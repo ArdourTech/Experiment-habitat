@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -10,19 +9,13 @@ using Newtonsoft.Json.Linq;
 using static Habitat.Cli.Utils.Objects;
 using static Habitat.Cli.Utils.Strings;
 using static Habitat.Cli.Utils.Zip;
+using static Habitat.Cli.Docker.Query;
+using static Habitat.Cli.Docker.Constant;
 
-namespace Habitat.Cli
+namespace Habitat.Cli.Docker
 {
     public class Docker : IDocker
     {
-        private static readonly Mount DockerBindingMount = new()
-        {
-            Source = "/var/run/docker.sock",
-            Target = "/var/run/docker.sock",
-            Type = "bind",
-            ReadOnly = false
-        };
-
         private readonly CancellationToken _cancellationToken;
         private readonly DockerClient _instance;
 
@@ -31,14 +24,11 @@ namespace Habitat.Cli
             _instance = new DockerClientConfiguration().CreateClient();
         }
 
-        public async Task<string?> CreateContainerAsync(string image, string name, string? networkName = null) {
+        public async Task<string?> CreateContainerAsync(string image, string name) {
             var imageDefinition = await FindImageAsync(image);
             var labels = imageDefinition!.Labels;
             Log.Info($"Creating Container for {image} named {name}");
-            //FIXME Network definitions from within the container
-            var hostConfig = new HostConfig()
-                .AttachNetwork(networkName);
-
+            var hostConfig = new HostConfig();
             if (labels.ContainsKey("HABITAT_WITH_DOCKER")) {
                 Log.Debug($"Binding Host Docker Sock to Container {name}");
                 hostConfig.AttachMount(DockerBindingMount);
@@ -129,16 +119,8 @@ namespace Habitat.Cli
 
         public async Task<string?> RunningContainerIdAsync(string containerName) {
             Log.Debug($"Looking for existing running Container named {containerName}");
-            var filters = new Dictionary<string, IDictionary<string, bool>>();
-            AddBasicFilter(filters, "name", containerName);
-            AddBasicFilter(filters, "status", "running");
-            var listParams = new ContainersListParameters
-            {
-                All = true,
-                Filters = filters
-            };
-            var results = await _instance.Containers.ListContainersAsync(listParams, _cancellationToken);
-            return results.FirstOrDefault(ContainerNamed(containerName))?.ID;
+            var container = await FindContainerAsync(containerName, "running");
+            return container?.ID;
         }
 
         public async Task<string?> FindContainerIdAsync(string containerName) {
@@ -162,9 +144,14 @@ namespace Habitat.Cli
             return container?.Labels;
         }
 
-        private async Task<ContainerListResponse?> FindContainerAsync(string containerName) {
+        private async Task<ContainerListResponse?> FindContainerAsync(string containerName,
+                                                                      string status = null!) {
             var filters = new Dictionary<string, IDictionary<string, bool>>();
             AddBasicFilter(filters, "name", containerName);
+            if (IsNotBlank(status)) {
+                AddBasicFilter(filters, "status", status);
+            }
+
             var listParams = new ContainersListParameters
             {
                 All = true,
@@ -185,23 +172,62 @@ namespace Habitat.Cli
             return images.FirstOrDefault(ImageNamed(imageName));
         }
 
-        private static void AddBasicFilter(IDictionary<string, IDictionary<string, bool>> filters,
-                                           string key,
-                                           string value) {
-            if (IsBlank(value)) return;
-            var nameFilter = new Dictionary<string, bool>
+        public async Task BindNetworksAsync(string containerName) {
+            var container = await FindContainerAsync(containerName, "running");
+            if (IsNull(container)) return;
+            container!.Labels.TryGetValue("HABITAT_NETWORKS", out var networks);
+            if (IsBlank(networks)) {
+                Log.Debug($"No HABITAT_NETWORKS found to attach {containerName} to");
+                return;
+            }
+
+            var networkNames = networks!
+                               .Split(',')
+                               .Select(s => s.Trim());
+            foreach (var networkName in networkNames) {
+                var network = await FindNetworkAsync(networkName);
+                if (IsNull(network)) {
+                    network = await CreateBridgeNetworkAsync(networkName);
+                }
+
+                await AttachNetworkAsync(container, network!);
+            }
+        }
+
+        private async Task<NetworkResponse?> CreateBridgeNetworkAsync(string networkName) {
+            var createParams = new NetworksCreateParameters
             {
-                { value, true }
+                Name = networkName,
+                Driver = "bridge"
             };
-            filters.Add(key, nameFilter);
+            var response = await _instance.Networks.CreateNetworkAsync(createParams, _cancellationToken);
+            Log.Debug($"Created Network {networkName}: {response.ID}");
+            return await FindNetworkAsync(networkName);
         }
 
-        private static Func<ContainerListResponse, bool> ContainerNamed(string name) {
-            return l => l.Names.Contains($"/{name}");
+        private async Task<NetworkResponse?> FindNetworkAsync(string networkName) {
+            var filters = new Dictionary<string, IDictionary<string, bool>>();
+            AddBasicFilter(filters, "name", networkName);
+            var listParams = new NetworksListParameters
+            {
+                Filters = filters
+            };
+            var networks = await _instance.Networks.ListNetworksAsync(listParams, _cancellationToken);
+            return networks.FirstOrDefault(NetworkNamed(networkName));
         }
 
-        private static Func<ImagesListResponse, bool> ImageNamed(string name) {
-            return i => i.RepoTags.Contains($"{name}");
+        private async Task AttachNetworkAsync(ContainerListResponse container, NetworkResponse network) {
+            var aliases = container.Names.Select(n => n.TrimStart('/')).ToList();
+            Log.Debug($"Attaching {aliases.First()} to Network {network.Name}");
+            var connectParams = new NetworkConnectParameters
+            {
+                Container = container.ID,
+                EndpointConfig = new EndpointSettings
+                {
+                    Aliases = aliases
+                }
+            };
+            await _instance.Networks.ConnectNetworkAsync(network.ID, connectParams, _cancellationToken);
         }
     }
 }

@@ -24,7 +24,7 @@ namespace Habitat.Cli
         }
 
         private static void WithParameterResolvers(AppConfigBuilder obj) {
-            obj.UseParameterResolver(ctx => (IDocker)new Docker(ctx.CancellationToken));
+            obj.UseParameterResolver(ctx => (IDocker)new Docker.Docker(ctx.CancellationToken));
         }
 
         private static int ErrorHandler(CommandContext ctx, Exception exception) {

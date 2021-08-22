@@ -3,7 +3,7 @@ using Docker.DotNet.Models;
 using static Habitat.Cli.Utils.Objects;
 using static Habitat.Cli.Utils.Strings;
 
-namespace Habitat.Cli
+namespace Habitat.Cli.Docker
 {
     public static class DockerExtensions
     {
@@ -14,12 +14,6 @@ namespace Habitat.Cli
 
             configMounts.Add(mount);
             config.Mounts = configMounts;
-            return config;
-        }
-
-        public static HostConfig AttachNetwork(this HostConfig config, string? networkName) {
-            if (IsNotBlank(networkName)) config.NetworkMode = networkName;
-
             return config;
         }
 

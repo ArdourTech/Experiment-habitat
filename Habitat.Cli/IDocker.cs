@@ -16,10 +16,12 @@ namespace Habitat.Cli
 
         Task<string?> FindContainerIdAsync(string containerName);
 
-        Task<string?> CreateContainerAsync(string image, string name, string? networkName = null);
+        Task<string?> CreateContainerAsync(string image, string name);
 
         Task<bool> RunContainerAsync(string containerId);
         Task<bool> StopContainerAsync(string containerId);
+
+        Task BindNetworksAsync(string containerId);
 
         Task BuildContainerAsync(FileInfo dockerfile,
                                  DirectoryInfo workingDirectory,
