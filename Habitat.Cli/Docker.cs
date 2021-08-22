@@ -158,6 +158,22 @@ namespace Habitat.Cli
             return IsNotBlank(runningContainerId);
         }
 
+        public async Task<string?> GetEntryPointAsync(string containerName) {
+            var runningContainerId = await RunningContainerIdAsync(containerName);
+            if (IsBlank(runningContainerId)) return null;
+
+            var filters = new Dictionary<string, IDictionary<string, bool>>();
+            AddBasicFilter(filters, "name", containerName);
+            var listParams = new ContainersListParameters
+            {
+                All = true,
+                Filters = filters
+            };
+            var containers = await _instance.Containers.ListContainersAsync(listParams, _cancellationToken);
+            var container = containers.First();
+            return container.Command;
+        }
+
         private static void AttachNetwork(HostConfig config, string? networkName) {
             if (IsNotBlank(networkName)) config.NetworkMode = networkName;
         }
@@ -175,24 +191,6 @@ namespace Habitat.Cli
 
         private static Func<ContainerListResponse, bool> ContainerNamed(string name) {
             return l => l.Names.Contains($"/{name}");
-        }
-
-        public async Task<string?> GetEntryPointAsync(string containerName) {
-            var runningContainerId = await RunningContainerIdAsync(containerName);
-            if (IsBlank(runningContainerId)) {
-                return null;
-            }
-
-            var filters = new Dictionary<string, IDictionary<string, bool>>();
-            AddBasicFilter(filters, "name", containerName);
-            var listParams = new ContainersListParameters
-            {
-                All = true,
-                Filters = filters
-            };
-            var containers = await _instance.Containers.ListContainersAsync(listParams, _cancellationToken);
-            var container = containers.First();
-            return container.Command;
         }
     }
 }

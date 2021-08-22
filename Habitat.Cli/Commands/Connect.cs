@@ -1,4 +1,3 @@
-using System;
 using System.Threading.Tasks;
 using CommandDotNet;
 using FluentValidation;
@@ -36,6 +35,7 @@ namespace Habitat.Cli.Commands
                 Log.Error($"Docker Container named {containerName} is not running.");
                 return Error.Result;
             }
+
             var entryPoint = await docker.GetEntryPointAsync(containerName);
             Log.Info($"docker exec -it {containerName} {entryPoint}");
             return Success.Result;
