@@ -70,7 +70,8 @@ The `habitat` CLI will
     the specified Networks. If the networks do not exists, they will be created
     as `bridge`s.
   * `HABITAT_VOLUMES=volume1,volume2` starts the Container with the specified
-    named Volumes. If the volumes do not exist, they will be created.
+    named Volumes mounted to `HABITAT_VOLUME_ROOT=<path>`. _Note: If the volumes
+    do not exist, they will be created with the `local` driver for persistence._
 
 ### Example Dockerfile
 
