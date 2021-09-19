@@ -11,5 +11,9 @@ namespace Habitat.Cli.Utils
         public static bool IsNotBlank(string? v) {
             return !IsBlank(v);
         }
+
+        public static string Trim(string v) {
+            return v.Trim();
+        }
     }
 }

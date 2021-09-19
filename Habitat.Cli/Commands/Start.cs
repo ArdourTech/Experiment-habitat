@@ -2,7 +2,6 @@ using System.Threading.Tasks;
 using CommandDotNet;
 using FluentValidation;
 using FluentValidation.Attributes;
-using static System.Environment;
 using static CommandDotNet.ExitCodes;
 using static Habitat.Cli.Utils.Strings;
 
@@ -42,10 +41,9 @@ namespace Habitat.Cli.Commands
         [DefaultMethod]
         public async Task<int> RunAsync(IDocker docker, StartArgs args) {
             var containerName = args.Name;
-            //Create Volumes and Networks if they do not exist
-
             if (await docker.IsContainerRunningAsync(containerName)) {
                 Log.Info($"Docker Container named {containerName} is already running.");
+                await docker.BindNetworksAsync(containerName);
                 return Success.Result;
             }
 
@@ -60,9 +58,7 @@ namespace Habitat.Cli.Commands
                 containerId = await docker.CreateContainerAsync(containerImage, containerName);
             }
 
-            //TODO Mount all volumes to volume root
             var runContainer = await docker.RunContainerAsync(containerId!);
-            //Bind other networks (if multiple)
             if (runContainer) {
                 await docker.BindNetworksAsync(containerName);
             }

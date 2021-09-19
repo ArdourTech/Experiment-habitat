@@ -75,7 +75,7 @@ The `habitat` CLI will
 ### Example Dockerfile
 
 ```dockerfile
-FROM ardourtech/habitat:<tag>
+FROM ardourtech/habitat:2021-09-19
 LABEL maintainer="Alexander Scott <xander@axrs.io>"
 
 # Build Arguments provided (and if necessary prompted for) by the Habitat CLI
@@ -89,7 +89,13 @@ LABEL HABITAT_WITH_X11=true
 LABEL HABITAT_WITH_DOCKER=true
 
 #Instructs the Habitat CLI to create the Networks and attach the Container to them
-LABEL HABITAT_NETWORKS="habitat,dev"
+LABEL HABITAT_NETWORKS=habitat,dev
+
+#Instructs the Habitat CLI to create Volumes and to attach them on Contianer Start
+# - Volumes are unique by name
+# - Volumes can be shared with multiple containers
+LABEL HABITAT_VOLUME_ROOT="/volumes/"
+LABEL HABITAT_VOLUMES=projects,maven-cache
 
 # Add the User as a new Ubuntu User
 USER root
@@ -101,6 +107,13 @@ RUN usermod \
     --login $HABITAT_USER \
     docker
 RUN echo "${HABITAT_USER}:${HABITAT_USER_PASSWORD}" | chpasswd
+
+# Create the volume mount points for Habitat. This can resolve some permission
+# issues when using non-root users
+RUN mkdir -p /volumes/projects /volumes/maven-cache
+RUN chown -R ${HABITAT_USER}:${HABITAT_USER} /volumes \
+    && chmod -R 775 /volumes \
+    && chmod -R g+s /volumes
 
 USER $HABITAT_USER
 WORKDIR /home/$HABITAT_USER

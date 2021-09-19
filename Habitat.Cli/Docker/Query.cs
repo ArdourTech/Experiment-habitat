@@ -16,6 +16,10 @@ namespace Habitat.Cli.Docker
             return n => n.Name.Equals(name);
         }
 
+        public static Func<VolumeResponse, bool> VolumeNamed(string name) {
+            return n => n.Name.Equals(name);
+        }
+
         public static Func<ImagesListResponse, bool> ImageNamed(string name) {
             return i => i.RepoTags.Contains($"{name}");
         }

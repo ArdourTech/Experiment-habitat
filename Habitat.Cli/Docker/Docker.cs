@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -6,6 +7,7 @@ using System.Threading.Tasks;
 using Docker.DotNet;
 using Docker.DotNet.Models;
 using Newtonsoft.Json.Linq;
+using static DefaultNamespace.Predicates;
 using static Habitat.Cli.Utils.Objects;
 using static Habitat.Cli.Utils.Strings;
 using static Habitat.Cli.Utils.Zip;
@@ -25,15 +27,12 @@ namespace Habitat.Cli.Docker
         }
 
         public async Task<string?> CreateContainerAsync(string image, string name) {
-            var imageDefinition = await FindImageAsync(image);
-            var labels = imageDefinition!.Labels;
             Log.Info($"Creating Container for {image} named {name}");
+            var imageDefinition = await FindImageAsync(image);
+            Debug.Assert(imageDefinition != null, nameof(imageDefinition) + " != null");
             var hostConfig = new HostConfig();
-            if (labels.ContainsKey("HABITAT_WITH_DOCKER")) {
-                Log.Debug($"Binding Host Docker Sock to Container {name}");
-                hostConfig.AttachMount(DockerBindingMount);
-            }
-
+            AddHabitatDockerHostSocket(name, imageDefinition, hostConfig);
+            await AddHabitatVolumesAsync(name, imageDefinition!, hostConfig);
             var createParams = new CreateContainerParameters
             {
                 Name = name,
@@ -44,13 +43,53 @@ namespace Habitat.Cli.Docker
                 AttachStdout = true,
                 HostConfig = hostConfig
             };
-            if (labels.ContainsKey("HABITAT_WITH_X11")) {
-                Log.Debug($"Binding Host X11 Display to Container {name}");
-                createParams.AddEnv("DISPLAY", "host.docker.internal:0");
-            }
-
+            BindX11DisplayEnv(name, imageDefinition, createParams);
             var container = await _instance.Containers.CreateContainerAsync(createParams, _cancellationToken);
             return container?.ID;
+        }
+
+        private static void BindX11DisplayEnv(string name,
+                                              ImagesListResponse imageDefinition,
+                                              CreateContainerParameters createParams) {
+            var labels = imageDefinition!.Labels;
+            if (!labels.ContainsKey("HABITAT_WITH_X11")) return;
+            Log.Debug($"Binding Host X11 Display to Container {name}");
+            createParams.AddEnv("DISPLAY", "host.docker.internal:0");
+        }
+
+        private static void AddHabitatDockerHostSocket(string name,
+                                                       ImagesListResponse imageDefinition,
+                                                       HostConfig hostConfig) {
+            var labels = imageDefinition.Labels;
+            if (!labels.ContainsKey("HABITAT_WITH_DOCKER")) return;
+            Log.Debug($"Binding Host Docker Sock to Container {name}");
+            hostConfig.AttachMount(DockerBindingMount);
+        }
+
+        private async Task AddHabitatVolumesAsync(string name,
+                                                  ImagesListResponse imageDefinition,
+                                                  HostConfig hostConfig) {
+            var labels = imageDefinition.Labels;
+            labels.TryGetValue("HABITAT_VOLUMES", out string? volumes);
+            labels.TryGetValue("HABITAT_VOLUME_ROOT", out string? volumeRoot);
+            if (IsBlank(volumeRoot)) {
+                Log.Debug($"No HABITAT_VOLUME_ROOT found for {name}. No Volumes will be mounted.");
+            }
+            else if (IsBlank(volumes)) {
+                Log.Debug($"No HABITAT_VOLUMES found to attach to {name}. No Volumes will be mounted.");
+            }
+            else {
+                var volumesToAttach = volumes!.Split(',').Select(Trim);
+                foreach (var volumeName in volumesToAttach) {
+                    var volume = await FindVolumeAsync(volumeName);
+                    if (IsNull(volume)) {
+                        volume = await CreateLocalVolumeAsync(name, volumeName);
+                    }
+
+                    Log.Debug($"Mounting Volume {volume!.Name}");
+                    hostConfig.AttachVolume(volumeRoot!, volume);
+                }
+            }
         }
 
         public async Task<bool> RunContainerAsync(string containerId) {
@@ -180,16 +219,16 @@ namespace Habitat.Cli.Docker
                 Log.Debug($"No HABITAT_NETWORKS found to attach {containerName} to");
                 return;
             }
-
-            var networkNames = networks!
-                               .Split(',')
-                               .Select(s => s.Trim());
-            foreach (var networkName in networkNames) {
+            var containerNetworks = container.NetworkSettings.Networks;
+            var networksToAttach = networks!
+                                   .Split(',')
+                                   .Select(Trim)
+                                   .Where(Not<string>(containerNetworks.ContainsKey));
+            foreach (var networkName in networksToAttach) {
                 var network = await FindNetworkAsync(networkName);
                 if (IsNull(network)) {
                     network = await CreateBridgeNetworkAsync(networkName);
                 }
-
                 await AttachNetworkAsync(container, network!);
             }
         }
@@ -228,6 +267,27 @@ namespace Habitat.Cli.Docker
                 }
             };
             await _instance.Networks.ConnectNetworkAsync(network.ID, connectParams, _cancellationToken);
+        }
+
+        private async Task<VolumeResponse?> FindVolumeAsync(string volumeName) {
+            var volumes = await _instance.Volumes.ListAsync(_cancellationToken);
+            return volumes.Volumes.FirstOrDefault(VolumeNamed(volumeName));
+        }
+
+        private async Task<VolumeResponse?> CreateLocalVolumeAsync(string containerName, string volumeName) {
+            var createParams = new VolumesCreateParameters
+            {
+                Driver = "local",
+                Name = volumeName,
+                Labels = new Dictionary<string, string>
+                {
+                    { "HABITAT_VOLUME", "true" },
+                    { "HABITAT_CONTAINER", containerName }
+                }
+            };
+            await _instance.Volumes.CreateAsync(createParams, _cancellationToken);
+            Log.Debug($"Created Volume {volumeName}");
+            return await FindVolumeAsync(volumeName);
         }
     }
 }

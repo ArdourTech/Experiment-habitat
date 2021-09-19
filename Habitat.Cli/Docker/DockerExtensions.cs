@@ -17,6 +17,16 @@ namespace Habitat.Cli.Docker
             return config;
         }
 
+        public static HostConfig AttachVolume(this HostConfig config, string target, VolumeResponse volume) {
+            var mount = new Mount
+            {
+                Target = $"{target.TrimEnd('/')}/{volume.Name}",
+                Source = volume.Name,
+                Type = "volume"
+            };
+            return config.AttachMount(mount);
+        }
+
         public static CreateContainerParameters AddEnv(this CreateContainerParameters containerParameters,
                                                        string name,
                                                        string? value) {

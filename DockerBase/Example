@@ -1,9 +1,11 @@
-FROM habitat:2021-08-22
+FROM ardourtech/habitat:2021-09-19
 ARG HABITAT_USER
 ARG HABITAT_USER_PASSWORD
-LABEL HABITAT_WITH_X11=true
-LABEL HABITAT_WITH_DOCKER=true
 LABEL HABITAT_NETWORKS="habitat,dev"
+LABEL HABITAT_VOLUMES="projects"
+LABEL HABITAT_VOLUME_ROOT="/volumes/"
+LABEL HABITAT_WITH_DOCKER=true
+LABEL HABITAT_WITH_X11=true
 
 USER root
 COPY rename_habitat_user.sh ./
@@ -12,6 +14,12 @@ RUN rm -f rename_habitat_user.sh
 
 COPY install_docker.sh ./
 RUN bash install_docker.sh && rm -f install_docker.sh
+
+# Create the volume mount points that Habitat will use when creating a container for the first time
+RUN mkdir -p /volumes/projects
+RUN chown -R ${HABITAT_USER}:${HABITAT_USER} /volumes \
+    && chmod -R 775 /volumes \
+    && chmod -R g+s /volumes
 
 USER $HABITAT_USER
 WORKDIR /home/$HABITAT_USER
