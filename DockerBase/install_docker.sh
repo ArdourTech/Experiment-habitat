@@ -3,7 +3,7 @@
 ## USER root
 ## COPY scripts/as_root/install_docker.sh ./
 ## RUN bash install_docker.sh && rm -f install_docker.sh
-set -e
+set -euo pipefail
 
 groupadd docker
 curl -fsSL https://get.docker.com -o get-docker.sh

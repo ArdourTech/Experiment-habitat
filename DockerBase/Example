@@ -9,8 +9,7 @@ LABEL HABITAT_WITH_X11=true
 
 USER root
 COPY rename_habitat_user.sh ./
-RUN bash rename_habitat_user.sh
-RUN rm -f rename_habitat_user.sh
+RUN bash rename_habitat_user.sh && rm -f rename_habitat_user.sh
 
 COPY install_docker.sh ./
 RUN bash install_docker.sh && rm -f install_docker.sh
