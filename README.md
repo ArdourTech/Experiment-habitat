@@ -1,3 +1,12 @@
+# Experiment
+
+> Habitat was an experiement which aimed to dockerise (with configuration persistance) my entire development environment.
+> The aim was to be able to quickly setup my environment on any machine running docker, regardless of base operating system.
+> The environments would then be able to be configured on a project, or organisation basis.
+>
+> What I hit however was performance and X-11 rendering resolution issues. The required machine hardware to be productive
+> simply didn't outweigh the maintenance of simple dotfiles.
+
 # Habitat
 
 > *STATUS: In Development. Not yet ready for Production*
